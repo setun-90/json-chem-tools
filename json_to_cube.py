@@ -102,14 +102,14 @@ write(" MO coefficients\n" if job == "MO" else
       " Electrostatic potential from Total SCF Density\n" if job == "Potential" and value == "SCF" else
       " Electron density from Total SCF Density\n" if job == "FDensity" and value == "SCF" else None)
 
-write(" {:> 4d}   {:>9.6f}   {:>9.6f}   {:>9.6f}    {:d}\n".format(-n_atoms if job == "MO" else n_atoms, x_min, y_min, z_min, n_val))
+write(" {:> 4d}{:>12.6f}{:>12.6f}{:>12.6f}    {:d}\n".format(-n_atoms if job == "MO" else n_atoms, x_min, y_min, z_min, n_val))
 
-line = " {:> 4d}   {:>9.6f}   {:>9.6f}   {:>9.6f}\n".format
+line = " {:> 4d}{:>12.6f}{:>12.6f}{:>12.6f}\n".format
 write(line(p1, s1, 0, 0))
 write(line(p2, 0, s2, 0))
 write(line(p3, 0, 0, s3))
 
-line = "  {:> 3d} {:>11.6f} {:>11.6f} {:>11.6f} {:>11.6f}\n".format
+line = "  {:> 3d}{:>12.6f}{:>12.6f}{:>12.6f}{:>12.6f}\n".format
 for a, p in zip(molecule["atoms_Z"], molecule["starting_geometry"]):
 	write(line(a, a, p[0], p[1], p[2]))
 

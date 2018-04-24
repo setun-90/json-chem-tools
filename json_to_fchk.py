@@ -120,45 +120,26 @@ line("MicOpt", int, [-1]*n_atoms)
 ## Extract contracted shells (both S=P and normal)
 primitives_by_shell = []
 for i, atom in enumerate(details["general"]["basis_set"], 1):
-	j, l = 1, len(atom)
-	n_ssh = []
-	while j < l:
-		ssh, n_ssh = atom[j-1], atom[j]
+	atomi = iter(zip(atom, atom[1:]))   # Necessary for using next()
+	for ssh, n_ssh in atomi:
 		if ssh[0] == "S" and n_ssh[0] == "P" and ssh[1][0][0] == n_ssh[1][0][0]:
 			## It's an SP hybridization
 			ssh[0] = "SP"
 			for e, c in zip(ssh[1], n_ssh[1]):
 				e += [c[1]]
-			j += 2
+			next(atomi, None)
 		else:
 			## It's a normal contraction
 			for e in ssh[1]:
 				e += [0]
-			j += 1
 		primitives_by_shell += [(i, ssh)]
-
-#	## Replacement (above loop is not robust)
-#	atomi = iter(zip(atom,atom[1:]))
-#	for ssh, n_ssh in atomi:
-#		if ssh[0] == "S" and n_ssh[0] == "P" and ssh[1][0][0] == n_ssh[1][0][0]:
-#			## It's an SP hybridization
-#			ssh[0] = "SP"
-#			for e, c in zip(ssh[1], n_ssh[1]):
-#				e += [c[1]]
-#			atomi.next()
-#		else:
-#			## It's a normal contraction
-#			for e in ssh[1]:
-#				e += [0]
-#		primitives_by_shell += [(i, ssh)]
-
 	## Last subshell
-	for e in n_ssh[1]:
+	for e in atom[-1][1]:
 		e += [0]
-	primitives_by_shell += [(i, n_ssh)]
+	primitives_by_shell += [(i, atom[-1])]
 
 ## Necessary because there is no block scope in Python
-del j, l
+#del j, l
 ## Ignored for the moment because this extraction is just an optimization
 ## So `len(primitives_by_shell)` is really the number of primitives in the
 ## *whole* molecule irrespective of hybridization
