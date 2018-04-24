@@ -232,15 +232,16 @@ line("IBond", int, [e2 for e1 in i_bond for e2 in e1])
 line("RBond", float, [e2 for e1 in r_bond for e2 in e1])
 line("Virial Ratio", float, results["wavefunction"]["virial_ratio"][-1])
 
-SCF_energy = results["wavefunction"]["total_molecular_energy"]/eV_to_Eh
-line("SCF Energy", float, SCF_energy)
-if pred_a():
-	CIS_energy = SCF_energy + results["excited_states"]["et_energies"][0]/cm_1_to_Eh
-	line("CIS Energy", float, CIS_energy)
-	line("Total Energy", float, CIS_energy)
-#	line("Post-SCF wavefunction norm", float, )          # should be scalar
-else:
-	line("Total Energy", float, SCF_energy)
+if results["wavefunction"]["total_molecular_energy"] != "N/A":
+	SCF_energy = results["wavefunction"]["total_molecular_energy"]/eV_to_Eh
+	line("SCF Energy", float, SCF_energy)
+	if pred_a():
+		CIS_energy = SCF_energy + results["excited_states"]["et_energies"][0]/cm_1_to_Eh
+		line("CIS Energy", float, CIS_energy)
+		line("Total Energy", float, CIS_energy)
+	#	line("Post-SCF wavefunction norm", float, )          # should be scalar
+	else:
+		line("Total Energy", float, SCF_energy)
 
 if results["geometry"]["geometric_values"][0][0] != "N/A":
 	line("RMS Force", float, results["geometry"]["geometric_values"][-1][1])
@@ -251,8 +252,15 @@ line("IOpCl", int, 0 if is_closed_shell() else 1)
 
 mo_coeffs = results["wavefunction"]["MO_coefs"]
 mo_energies = results["wavefunction"]["MO_energies"]
-## Check condition 0 if is_open_shell(<=> !is_closed_shell ???) and ! mo_energies[1] ???
-line("IROHF", int, 0 if is_closed_shell() or len(mo_energies) == 2 else 1)
+## Check condition: 1 if n_alpha_electrons != n_beta_electrons and len(mo_energies) == 1 else 0 ???
+line("IROHF", int, 1 if not is_closed_shell() and len(mo_energies) == 1 else 0)
+#if not is_closed_shell():
+#	if len(mo_energies) == 2:
+#		IROHF = 0
+#	else:
+#		IROHF = 1
+#else:
+#	IROHF = 0
 line("Alpha Orbital Energies", float, [E/eV_to_Eh for E in mo_energies[0]])
 if not is_closed_shell():
 	line("Beta Orbital Energies", float, [E/eV_to_Eh for E in mo_energies[1]])
@@ -285,7 +293,7 @@ line("Atom Modified MM Charges", float, [0]*n_atoms)
 line("Link Distances", float, [0]*n_atoms)
 #line("Cartesian Gradient", float, )
 
-#if argv[1] in {"OPT", "SP", "OPT_ES", "OPT_ET"}:
+#if argv[1] in {"OPT", "SP_plus", "SP_moins", "OPT_ES", "OPT_ET"}:
 #	line("Dipole moment", float, )
 #	line("Quadrupole moment", float, )
 #	line("QEq coupling tensors", float, )
