@@ -234,7 +234,14 @@ line("IOpCl", int, 0 if is_closed_shell() else 1)
 mo_coeffs = results["wavefunction"]["MO_coefs"]
 mo_energies = results["wavefunction"]["MO_energies"]
 ## Check condition: 1 if n_alpha_electrons != n_beta_electrons and len(mo_energies) == 1 else 0 ???
-line("IROHF", int, 1 if n_alpha_electrons != n_beta_electrons and len(mo_energies) == 1 else 0)
+line("IROHF", int, 1 if not is_closed_shell() and len(mo_energies) == 1 else 0)
+#if not is_closed_shell():
+#	if len(mo_energies) == 2:
+#		IROHF = 0
+#	else:
+#		IROHF = 1
+#else:
+#	IROHF = 0
 line("Alpha Orbital Energies", float, [E/eV_to_Eh for E in mo_energies[0]])
 if not is_closed_shell():
 	line("Beta Orbital Energies", float, [E/eV_to_Eh for E in mo_energies[1]])
