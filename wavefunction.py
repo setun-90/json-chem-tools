@@ -84,3 +84,32 @@ def gs(l, m, a, x, y, z):
 		raise ValueError("The quantum numbers describe an "
 		               + ("impossible (l < |m|)" if l < abs(m) else "unimplemented")
 		               + " atomic orbital")
+
+## MO wavefunction
+#def psi(shells, x, y, z):
+#	return sum(c*gs(l, m, a, x, y, z) for i, l in shells for m in  for c, a in ...)
+
+## Extraction of primitive exponents for each shell
+## c.f. CHK-JSON-Shell.pdf
+def primitives(basis_set):
+	res = []
+	for i, atom in enumerate(basis_set, 1):
+		atomi = iter(zip(atom, atom[1:]))   # Necessary for using next()
+		for ssh, n_ssh in atomi:
+			if ssh[0] == "S" and n_ssh[0] == "P" and ssh[1][0][0] == n_ssh[1][0][0]:
+				## It's an SP hybridization
+				ssh[0] = "SP"
+				for e, c in zip(ssh[1], n_ssh[1]):
+					e += [c[1]]
+				next(atomi, None)
+			else:
+				## It's a normal contraction
+				for e in ssh[1]:
+					e += [0]
+			res += [(i, ssh)]
+		## Last subshell
+		for e in atom[-1][1]:
+			e += [0]
+		res += [(i, atom[-1])]
+
+	return res

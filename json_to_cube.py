@@ -1,5 +1,5 @@
 #! /usr/bin/env python2.7
-# -*- encoding: utf-8 -*-
+## -*- encoding: utf-8 -*-
 
 
 
@@ -13,7 +13,7 @@ from sys import stdin, stdout
 from json import load
 from math import pi, ceil
 from physics import A_to_a0
-from wavefunction import gs
+from wavefunction import #psi, primitives
 
 ## For Python 2 & 3 interoperability (`print` is a statement in Python 2)
 write = stdout.write
@@ -25,12 +25,12 @@ struct = load(stdin)
 
 molecule = struct["molecule"]
 n_atoms = molecule["nb_atoms"]
-
+#shell_coefficients = primitives(struct["details"]["general"]["basis_set"])
 
 
 ## Size: gaussian cube protocol
 temp = map(lambda l: l/A_to_a0, struct["results"]["geometry"]["elements_3D_coords_converged"])
-over_s = 5
+over_s = 5   ## to be tuned
 x_max, y_max, z_max = max(temp[::3]) + over_s, max(temp[1::3]) + over_s, max(temp[2::3]) + over_s
 x_min, y_min, z_min = min(temp[::3]) - over_s, min(temp[1::3]) - over_s, min(temp[2::3]) - over_s
 t_x, t_y, t_z = x_max - x_min, y_max - y_min, z_max - z_min
@@ -81,7 +81,7 @@ if job == "MO":
 		elif value in {"AMO", "BMO"}: pass
 		elif value in {"HOMO","LUMO"}:
 			#def discrete(x, y, z):
-			#	return sum(gs(l, m, a, x, y, z) for l in ... for m in ... for a in ...)
+			#	return psi_OM(shell_coefficients, x, y, z)
 			MO = [(sum(molecule["atoms_Z"]) - molecule["charge"])//2 + (1 if value == "LUMO" else 0)]
 			n_val = 1
 

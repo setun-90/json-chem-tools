@@ -6,12 +6,13 @@
 ## Usage
 from sys import argv, stderr
 if len(argv) < 2:
-	stderr.write(u"Usage: {} $job < ${{input}}.json > ${{output}}.fchk\n".format(argv[0]))
+	stderr.write("Usage: {} $job < ${{input}}.json > ${{output}}.fchk\n".format(argv[0]))
 	exit(1)
 
 from sys import stdin, stdout
 from json import load
 from physics import eV_to_Eh, cm_1_to_Eh
+from wavefunction import primitives
 
 ## For Python 2 & 3 interoperability (`print` is a statement in Python 2)
 write = stdout.write
@@ -116,30 +117,8 @@ line("Nuclear GFac", float, molecule["nuclear_gfactors"])
 
 line("MicOpt", int, [-1]*n_atoms)
 
-## c.f. CHK-JSON-Shell.pdf
 ## Extract contracted shells (both S=P and normal)
-primitives_by_shell = []
-for i, atom in enumerate(details["general"]["basis_set"], 1):
-	atomi = iter(zip(atom, atom[1:]))   # Necessary for using next()
-	for ssh, n_ssh in atomi:
-		if ssh[0] == "S" and n_ssh[0] == "P" and ssh[1][0][0] == n_ssh[1][0][0]:
-			## It's an SP hybridization
-			ssh[0] = "SP"
-			for e, c in zip(ssh[1], n_ssh[1]):
-				e += [c[1]]
-			next(atomi, None)
-		else:
-			## It's a normal contraction
-			for e in ssh[1]:
-				e += [0]
-		primitives_by_shell += [(i, ssh)]
-	## Last subshell
-	for e in atom[-1][1]:
-		e += [0]
-	primitives_by_shell += [(i, atom[-1])]
-
-## Necessary because Python doesn't have block scope
-del atomi
+primitives_by_shell = primitives(details["general"]["basis_set"])
 
 ## Since the extraction is just an optimization (cclib does not coalesce hybridized orbitals),
 ## leave this line if discretisations in
@@ -172,20 +151,23 @@ line("Contraction coefficients", float, [C[1] for prim in primitives_by_shell fo
 line("P(S=P) Contraction coefficients", float, [C[2] for prim in primitives_by_shell for C in prim[1][1]])
 line("Coordinates of each shell", float, [e for i in shell_to_atom for e in results["geometry"]["elements_3D_coords_converged"][3*i-3:3*i]])
 
+## To be revised later
 line("Num ILSW", int, 100)
-line("ILSW", int, [0]*4 + [2] + [0]
-                + [0]*4 + [1009,-1]
-                + [0]*4 + [2] + [0]
-                + [0]*4 + [1] + [0]
-                + [1] + [0]*5
-                + [0]*2 + [10000,0,-1] + [0]
-                + [0]*6
-                + [0]*3 + [1] + [0]*2
-                + [0]*2 + [1] + [0]*3
-                + [0]*2 + [4,41] + [0]*2
-                + [0]*2 + [13] + [0]*3
-                + [0]*3 + [n_atoms] + [0]*2
-                + ([0]*6)*4 + [0]*4)
+## Massive constant array that varies in only three entries
+line("ILSW", int, [0, 	    0,       0,       0,       2,       0]
+                + [0, 	    0,       0,       0,    1009,      -1]
+                + [0,       0,       0,       0,       2,       0]    # some jobs have 0 instead of 2
+                + [0, 	    0,       0,       0,       1,       0]    # some jobs have 0 instead of 1
+                + [1,       0,       0,       0,       0,       0]
+                + [0,       0,   10000,       0,      -1,       0]
+                + [0,       0,       0,       0,       0,       0]
+                + [0,       0,       0,       1,       0,       0]
+                + [0,       0,       1,       0,       0,       0]
+                + [0,       0,       4,      41,       0,       0]
+                + [0,       0,      13,       0,       0,       0]
+                + [0,       0,       0, n_atoms,       0,       0]
+                + [0,       0,       0,       0,       0,       0]*4
+                + [0,       0,       0,       0])
 
 line("Num RLSW", int, 41)
 line("RLSW", float, [.75]*2 + [1]*2 + [.25]
