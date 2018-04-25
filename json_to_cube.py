@@ -29,9 +29,10 @@ n_atoms = molecule["nb_atoms"]
 
 
 ## Size: gaussian cube protocol
-temp = struct["results"]["geometry"]["elements_3D_coords_converged"]
-x_max, y_max, z_max = max(temp[::3]), max(temp[1::3]), max(temp[2::3])
-x_min, y_min, z_min = min(temp[::3]), min(temp[1::3]), min(temp[2::3])
+temp = map(lambda l: l/A_to_a0, struct["results"]["geometry"]["elements_3D_coords_converged"])
+over_s = 5
+x_max, y_max, z_max = max(temp[::3]) + over_s, max(temp[1::3]) + over_s, max(temp[2::3]) + over_s
+x_min, y_min, z_min = min(temp[::3]) - over_s, min(temp[1::3]) - over_s, min(temp[2::3]) - over_s
 t_x, t_y, t_z = x_max - x_min, y_max - y_min, z_max - z_min
 
 ## (p|s).
@@ -51,7 +52,7 @@ try:
 		## -1 is not implemented
 		s1, s2, s3 = (2.0**(2+p_npts)/3.0,)*3   if -5 < p_npts < -1 else \
 		             (-p_npts*1e-3/A_to_a0,)*3  if p_npts <= -5 else None
-		p1, p2, p3 = sorted([int(t_x/s1 + 1), int(t_y/s2 + 1), int(t_z/s3 + 1)])
+		p1, p2, p3 = [int(t_x/s1 + 1), int(t_y/s2 + 1), int(t_z/s3 + 1)]
 	del p_npts
 
 ## Didn't work - it's a keyword

@@ -138,11 +138,11 @@ for i, atom in enumerate(details["general"]["basis_set"], 1):
 		e += [0]
 	primitives_by_shell += [(i, atom[-1])]
 
-## Necessary because there is no block scope in Python
-#del j, l
-## Ignored for the moment because this extraction is just an optimization
-## So `len(primitives_by_shell)` is really the number of primitives in the
-## *whole* molecule irrespective of hybridization
+## Necessary because Python doesn't have block scope
+del atomi
+
+## Since the extraction is just an optimization (cclib does not coalesce hybridized orbitals),
+## leave this line if discretisations in
 #primitives_by_shell = [(i, ssh) for i, atom in enumerate(details["general"]["basis_set"], 1) for ssh in atom]
 shell_type = {
 	"S"  : 0,
@@ -234,14 +234,7 @@ line("IOpCl", int, 0 if is_closed_shell() else 1)
 mo_coeffs = results["wavefunction"]["MO_coefs"]
 mo_energies = results["wavefunction"]["MO_energies"]
 ## Check condition: 1 if n_alpha_electrons != n_beta_electrons and len(mo_energies) == 1 else 0 ???
-line("IROHF", int, 1 if not is_closed_shell() and len(mo_energies) == 1 else 0)
-#if not is_closed_shell():
-#	if len(mo_energies) == 2:
-#		IROHF = 0
-#	else:
-#		IROHF = 1
-#else:
-#	IROHF = 0
+line("IROHF", int, 1 if n_alpha_electrons != n_beta_electrons and len(mo_energies) == 1 else 0)
 line("Alpha Orbital Energies", float, [E/eV_to_Eh for E in mo_energies[0]])
 if not is_closed_shell():
 	line("Beta Orbital Energies", float, [E/eV_to_Eh for E in mo_energies[1]])
