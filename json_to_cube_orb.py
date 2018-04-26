@@ -13,7 +13,8 @@ from sys import stdin, stdout
 from json import load
 from math import pi, ceil
 from physics import A_to_a0
-from wavefunction import primitives #, psi
+from wavefunction import primitives
+from orbkit import options, grid
 
 ## For Python 2 & 3 interoperability (`print` is a statement in Python 2)
 write = stdout.write
@@ -25,12 +26,12 @@ struct = load(stdin)
 
 molecule = struct["molecule"]
 n_atoms = molecule["nb_atoms"]
-shell_coefficients = primitives(struct["comp_details"]["general"]["basis_set"])
+#shell_coefficients = primitives(struct["details"]["general"]["basis_set"])
 
 
 ## Size: gaussian cube protocol
 temp = map(lambda l: l/A_to_a0, struct["results"]["geometry"]["elements_3D_coords_converged"])
-over_s = 5   ## oversizing, to be tuned
+over_s = 5   ## to be tuned
 x_max, y_max, z_max = max(temp[::3]) + over_s, max(temp[1::3]) + over_s, max(temp[2::3]) + over_s
 x_min, y_min, z_min = min(temp[::3]) - over_s, min(temp[1::3]) - over_s, min(temp[2::3]) - over_s
 t_x, t_y, t_z = x_max - x_min, y_max - y_min, z_max - z_min
@@ -68,31 +69,25 @@ except ValueError:
 job, value = argv[1].split("=")
 
 if job == "MO":
-	## The function that will be executed for the job, defined here as it
-	## is an invariant of the main loop defined at the end
-	#def discrete(x, y, z):
-	#	
-	#	return psi_MO(shell_coefficients, x, y, z)
-
 	## MO is always a list as this allows the same formatting to be used
 	## for both single and multiple orbitals
-	HOMO = (sum(molecule["atoms_Z"]) - molecule["charge"])//2
 	try:
 		MO = [int(value)]
+		n_val = 1
 	except ValueError:
-		if value == "All":
-			MO = [i for i in range(HOMO)]
+		if value == "All": pass
 		elif value == "Valence": pass
 		elif value == "Virtuals": pass
 		elif value in {"OccA","OccB"}: pass
 		elif value in {"AMO", "BMO"}: pass
 		elif value in {"HOMO","LUMO"}:
-			MO = [HOMO + (1 if value == "LUMO" else 0)]
-	n_val = len(MO)
+			#def discrete(x, y, z):
+			#	return psi_OM(shell_coefficients, x, y, z)
+			MO = [(sum(molecule["atoms_Z"]) - molecule["charge"])//2 + (1 if value == "LUMO" else 0)]
+			n_val = 1
 
 elif job == "FDensity":
 	#def discrete(x, y, z):
-	#	
 	#	return 
 	n_val = 1
 
@@ -125,7 +120,6 @@ for a, p in zip(molecule["atoms_Z"], molecule["starting_geometry"]):
 ## Specific to MO orbitals (c.f. cubegen documentation)
 if job == "MO":
 	write(" {:> 4d}".format(n_val))
-	## TODO: check formatting in case of multiple orbitals
 	for o in MO:
 		write("  {:> 3d}".format(o))
 	write("\n")
@@ -135,10 +129,11 @@ if job == "MO":
 ## Generate voxel data
 l = p3*n_val
 block = ((" {: .5E}"*6 + "\n")*(l//6) + (" {: .5E}"*(l%6) + "\n" if l%6 > 0 else "")).format
-write(block(*([0]*l)))   # testing
+write(block(*([0]*l)))
 
 #X, Y, Z = [x_min + s_x*n for n in range(p1)], [y_min + s_y*n for n in range(p2)], [z_min + s_z*n for n in range(p3)]
 
 #for x in X:
 #	for y in Y:
-#		write(block([v for z in Z for v in discrete(x, y, z)]))
+#		for z in Z:
+#			write(block(discrete(x, y, z)))
