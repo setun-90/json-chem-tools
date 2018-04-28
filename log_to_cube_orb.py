@@ -5,8 +5,8 @@
 
 ## Usage
 from sys import argv, stderr
-if len(argv) < 3:
-	stderr.write("Usage: {} $job[=$value] $npts < ${{input}}.json > ${{output}}.cube\n".format(argv[0]))
+if len(argv) < 4:
+	stderr.write("Usage: {} $job[=$value] $npts ${{input}}.log > ${{output}}.cube\n".format(argv[0]))
 	exit(1)
 
 from sys import stdin, stdout
@@ -21,14 +21,12 @@ write = stdout.write
 
 
 ## Get LOG data
+data = read.read_gaussian_log(argv[1], all_mo=True)
+
 
 
 ## Size: gaussian cube protocol
-temp = map(lambda l: l/A_to_a0, struct["results"]["geometry"]["elements_3D_coords_converged"])
 over_s = 5   ## to be tuned
-x_max, y_max, z_max = max(temp[::3]) + over_s, max(temp[1::3]) + over_s, max(temp[2::3]) + over_s
-x_min, y_min, z_min = min(temp[::3]) - over_s, min(temp[1::3]) - over_s, min(temp[2::3]) - over_s
-t_x, t_y, t_z = x_max - x_min, y_max - y_min, z_max - z_min
 
 ## (p|s).
 ## Try to treat it as a number
@@ -48,8 +46,8 @@ try:
 	## Negative: the spacing is given and the number of points is deduced
 	else:
 		## ORBKIT
-		#options.adjust_grid = [5, (2.0**(2+p_npts)/3.0,)*3   if -5 < p_npts < -1 else \
-		#                          (-p_npts*1e-3/A_to_a0,)*3  if p_npts <= -5 else None]
+		#options.adjust_grid = [over_s, (2.0**(2+p_npts)/3.0,)*3   if -5 < p_npts < -1 else \
+		#                               (-p_npts*1e-3/A_to_a0,)*3  if p_npts <= -5 else None]
 
 		## -1 is not implemented
 		s1, s2, s3 = (2.0**(2+p_npts)/3.0,)*3   if -5 < p_npts < -1 else \
