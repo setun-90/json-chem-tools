@@ -10,23 +10,17 @@ if len(argv) < 3:
 	exit(1)
 
 from sys import stdin, stdout
-from json import load
 from math import pi, ceil
 from physics import A_to_a0
 from wavefunction import primitives
-from orbkit import options, grid
+from orbkit import options, grid, read
 
 ## For Python 2 & 3 interoperability (`print` is a statement in Python 2)
 write = stdout.write
 
 
 
-## Get JSON data
-struct = load(stdin)
-
-molecule = struct["molecule"]
-n_atoms = molecule["nb_atoms"]
-#shell_coefficients = primitives(struct["details"]["general"]["basis_set"])
+## Get LOG data
 
 
 ## Size: gaussian cube protocol
@@ -45,11 +39,18 @@ try:
 	if 0 <= p_npts:
 		if p_npts == 0:
 			p_npts = 80
+		## ORBKIT
+		#
+
 		p1, p2, p3 = (p_npts,)*3
 		s_x, s_y, s_z = t_x/p1, t_y/p2, t_z/p3
 		s1, s2, s3 = sorted([s_x, s_y, s_z])
 	## Negative: the spacing is given and the number of points is deduced
 	else:
+		## ORBKIT
+		#options.adjust_grid = [5, (2.0**(2+p_npts)/3.0,)*3   if -5 < p_npts < -1 else \
+		#                          (-p_npts*1e-3/A_to_a0,)*3  if p_npts <= -5 else None]
+
 		## -1 is not implemented
 		s1, s2, s3 = (2.0**(2+p_npts)/3.0,)*3   if -5 < p_npts < -1 else \
 		             (-p_npts*1e-3/A_to_a0,)*3  if p_npts <= -5 else None
