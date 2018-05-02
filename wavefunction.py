@@ -20,7 +20,8 @@ def binomial(n, m):
 
 ## GTO normalization constant
 def N(a, lx, ly, lz):
-	return sqrt((2**(2*(lx + ly + lz))*fac(lx)*fac(ly)*fac(lz)*pow(a, l + 1.5))
+	l = lx + ly + lz
+	return sqrt((2**(2*l)*fac(lx)*fac(ly)*fac(lz)*pow(a, l + 1.5))
 	           /(fac(2*lx)*fac(2*ly)*fac(2*lz)*pow(pi, 1.5)))
 
 ## Cartesian GTO angular part
@@ -30,18 +31,17 @@ def gc(lx, ly, lz, a, x, y, z):
 ## Calculation of coefficient for transforming Cartesian GTO to Spherical GTO
 ## This can be memoized for an easy performance gain
 def c(m, lx, ly, lz):
-#	memo = {}
-#	try:
-#		return memo[(m,lx,ly,z)]
-#	except KeyError:
-	ma = abs(m)
-	l = lx + ly + lz
-	j = (lx + ly - ma)/2
-#	memo[(m,lx,ly,lz)] = ...
-	return sqrt(float((fac(2*lx)*fac(2*ly)*fac(2*lz)*fac(l)*fac(l - ma)) / (fac(2*l)*fac(lx)*fac(ly)*fac(lz)*(l + ma)))) * 1.0/(2**l*fac(l))  \
-	     * sum(binomial(l, i)*binomial(i, j)*(-1)**i*fac(2*l - 2*i)/fac(l - ma - 2*i) for i in range(l - ma/2)) \
-	     * sum(binomial(j, k)*binomial(ma, lx - 2*k) for k in range(j)) \
-	     * (-1)**((ma - lx + 2*k)/2)
+	memo = {}
+	try:
+		return memo[m,lx,ly,lz]
+	except KeyError:
+		ma = abs(m)
+		l = lx + ly + lz
+		j = (lx + ly - ma)/2
+	memo[m,lx,ly,lz] = sqrt(float((fac(2*lx)*fac(2*ly)*fac(2*lz)*fac(l)*fac(l - ma)) / (fac(2*l)*fac(lx)*fac(ly)*fac(lz)*fac(l + ma)))) * 1.0/(2**l*fac(l))  \
+	                 * sum(binomial(l, i)*binomial(i, j)*(-1)**i*fac(2*l - 2*i)/fac(l - ma - 2*i) for i in range((l - ma)//2)) \
+	                 * sum(binomial(j, k)*binomial(ma, lx - 2*k)*(-1)**((ma - lx + 2*k)/2) for k in range(j))
+	return memo[m,lx,ly,lz]
 
 def v(m, lx, ly, lz, a, x, y, z):
 	return c(m,lx,ly,lz)*gc(lx,ly,lz,a,x,y,z)
@@ -51,27 +51,27 @@ def v(m, lx, ly, lz, a, x, y, z):
 vc = {
 	(0, 0): lambda a, x, y, z: v( 0,0,0,0,a,x,y,z),
 
-	(1,-1): lambda a, x, y, z: (v(1,1,0,0,a,x,y,z) - j*v(1,0,1,0,a,x,y,z))/sqrt(2.0),
+	(1,-1): lambda a, x, y, z: (v(1,1,0,0,a,x,y,z) - 1j*v(1,0,1,0,a,x,y,z))/sqrt(2.0),
 	(1, 0): lambda a, x, y, z: v( 0,0,0,1,a,x,y,z),
-	(1, 1): lambda a, x, y, z: (v(1,1,0,0,a,x,y,z) + j*v(1,0,1,0,a,x,y,z))/sqrt(2.0),
+	(1, 1): lambda a, x, y, z: (v(1,1,0,0,a,x,y,z) + 1j*v(1,0,1,0,a,x,y,z))/sqrt(2.0),
 
-	(2,-2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,0,a,x,y,z) - v(2,0,2,0,a,x,y,z)) - j*v(2,1,1,0,a,x,y,z)/sqrt(2.0),
-	(2,-1): lambda a, x, y, z: (v(1,1,0,1,a,x,y,z) - j*v(1,0,1,1,a,x,y,z))/sqrt(2.0),
+	(2,-2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,0,a,x,y,z) - v(2,0,2,0,a,x,y,z)) - 1j*v(2,1,1,0,a,x,y,z)/sqrt(2.0),
+	(2,-1): lambda a, x, y, z: (v(1,1,0,1,a,x,y,z) - 1j*v(1,0,1,1,a,x,y,z))/sqrt(2.0),
 	(2, 0): lambda a, x, y, z: v(0,0,0,2,a,x,y,z) - (v(0,2,0,0,a,x,y,z) + v(0,0,2,0,a,x,y,z))/2.0,
-	(2, 1): lambda a, x, y, z: (v(1,1,0,1,a,x,y,z) + j*v(1,0,1,1,a,x,y,z))/sqrt(2.0),
-	(2, 2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,0,a,x,y,z) - v(2,0,2,0,a,x,y,z)) + j*v(2,1,1,0,a,x,y,z)/sqrt(2.0),
+	(2, 1): lambda a, x, y, z: (v(1,1,0,1,a,x,y,z) + 1j*v(1,0,1,1,a,x,y,z))/sqrt(2.0),
+	(2, 2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,0,a,x,y,z) - v(2,0,2,0,a,x,y,z)) + 1j*v(2,1,1,0,a,x,y,z)/sqrt(2.0),
 
-	(3,-3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) + j*v(3,0,3,0,a,x,y,z)) - 3.0/4.0*(v(3,1,2,0,a,x,y,z) + j*v(3,2,1,0,a,x,y,z)),
-	(3,-2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,1,a,x,y,z) - v(2,0,2,1,a,x,y,z)) - j*v(2,1,1,1,a,x,y,z)/sqrt(2.0), 
-	(3,-1): lambda a, x, y, z: sqrt(3.0/5.0)*(v(1,1,0,2,a,x,y,z) - j*v(1,0,1,2,a,x,y,z)) - sqrt(3.0)*(v(1,3,0,0,a,x,y,z) - j*v(1,0,3,0,a,x,y,z))/4.0 - sqrt(3.0)*(v(1,1,2,0,a,x,y,z) - j*v(1,2,1,0,a,x,y,z))/(4.0*sqrt(5.0)), 
+	(3,-3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) + 1j*v(3,0,3,0,a,x,y,z)) - 3.0/4.0*(v(3,1,2,0,a,x,y,z) + 1j*v(3,2,1,0,a,x,y,z)),
+	(3,-2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,1,a,x,y,z) - v(2,0,2,1,a,x,y,z)) - 1j*v(2,1,1,1,a,x,y,z)/sqrt(2.0), 
+	(3,-1): lambda a, x, y, z: sqrt(3.0/5.0)*(v(1,1,0,2,a,x,y,z) - 1j*v(1,0,1,2,a,x,y,z)) - sqrt(3.0)*(v(1,3,0,0,a,x,y,z) - 1j*v(1,0,3,0,a,x,y,z))/4.0 - sqrt(3.0)*(v(1,1,2,0,a,x,y,z) - 1j*v(1,2,1,0,a,x,y,z))/(4.0*sqrt(5.0)), 
 	(3, 0): lambda a, x, y, z: v(0,0,0,3,a,x,y,z) - 3.0*(v(0,2,0,1,a,x,y,z) + v(0,0,2,1,a,x,y,z))/(2.0*sqrt(5.0)),
-	(3, 1): lambda a, x, y, z: sqrt(3.0/5.0)*(v(1,1,0,2,a,x,y,z) + j*v(1,0,1,2,a,x,y,z)) - sqrt(3.0)*(v(1,3,0,0,a,x,y,z) + j*v(1,0,3,0,a,x,y,z))/4.0 - sqrt(3.0)*(v(1,1,2,0,a,x,y,z) + j*v(1,2,1,0,a,x,y,z))/(4.0*sqrt(5.0)),
-	(3, 2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,1,a,x,y,z) - v(2,0,2,1,a,x,y,z)) + j*v(2,1,1,1,a,x,y,z)/sqrt(2.0),
-	(3, 3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) - j*v(3,0,3,0,a,x,y,z)) - 3.0/4.0*(v(3,1,2,0,a,x,y,z) - j*v(3,2,1,0,a,x,y,z)),
+	(3, 1): lambda a, x, y, z: sqrt(3.0/5.0)*(v(1,1,0,2,a,x,y,z) + 1j*v(1,0,1,2,a,x,y,z)) - sqrt(3.0)*(v(1,3,0,0,a,x,y,z) + 1j*v(1,0,3,0,a,x,y,z))/4.0 - sqrt(3.0)*(v(1,1,2,0,a,x,y,z) + 1j*v(1,2,1,0,a,x,y,z))/(4.0*sqrt(5.0)),
+	(3, 2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,1,a,x,y,z) - v(2,0,2,1,a,x,y,z)) + 1j*v(2,1,1,1,a,x,y,z)/sqrt(2.0),
+	(3, 3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) - 1j*v(3,0,3,0,a,x,y,z)) - 3.0/4.0*(v(3,1,2,0,a,x,y,z) - 1j*v(3,2,1,0,a,x,y,z)),
 
-	(4,-3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) + j*v(3,0,3,1,a,x,y,z)) - 3.0/4.0*(v(3,1,2,1,a,x,y,z) + j*v(3,2,1,1,a,x,y,z)),
+	(4,-3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) + 1j*v(3,0,3,1,a,x,y,z)) - 3.0/4.0*(v(3,1,2,1,a,x,y,z) + 1j*v(3,2,1,1,a,x,y,z)),
 	(4, 0): lambda a, x, y, z: v(0,0,0,4,a,x,y,z) + 3.0*(v(0,4,0,0,a,x,y,z) + v(0,0,4,0,a,x,y,z))/8.0 - 3.0*sqrt(3.0)*(v(0,2,0,2,a,x,y,z) + v(0,0,2,2,a,x,y,z) - 0.25*v(0,2,2,0,a,x,y,z))/sqrt(35.0),
-	(4, 3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) - j*v(3,0,3,1,a,x,y,z)) - 3.0/4.0*(v(3,1,2,1,a,x,y,z) - j*v(3,2,1,1,a,x,y,z)) #,
+	(4, 3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) - 1j*v(3,0,3,1,a,x,y,z)) - 3.0/4.0*(v(3,1,2,1,a,x,y,z) - 1j*v(3,2,1,1,a,x,y,z)) #,
 
 #	(5, 0): lambda a, x, y, z: 
 }
@@ -79,15 +79,22 @@ vc = {
 ## Spherical GTO angular part
 def gs(l, m, a, x, y, z):
 	try:
-		return gc[(l,m)](a,x,y,z)
+		return vc[l,m](a,x,y,z).real
 	except KeyError:
 		raise ValueError("The quantum numbers describe an "
 		               + ("impossible (l < |m|)" if l < abs(m) else "unimplemented")
 		               + " atomic orbital")
 
 ## MO wavefunction
-#def psi(shells, x, y, z):
-#	return sum(c*gs(l, m, a, x, y, z) for i, l in shells for m in  for c, a in ...)
+def psi_MO(shells, x, y, z):
+	sh_to_l = {
+		"S" : 0,
+		"P" : 1,
+		"D" : 2,
+		"F" : 3,
+		"G" : 4
+	}
+	return [sum(ssh[1][0][1]*gs(sh_to_l[ssh[0]], m, ssh[1][0][0], x, y, z) for i, ssh in shells for m in range(-sh_to_l[ssh[0]],sh_to_l[ssh[0]]+1))]
 
 ## Extraction of primitive exponents for each shell
 ## c.f. CHK-JSON-Shell.pdf

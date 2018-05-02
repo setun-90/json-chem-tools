@@ -13,7 +13,7 @@ from sys import stdin, stdout
 from json import load
 from math import pi, ceil
 from physics import A_to_a0
-from wavefunction import primitives #, psi
+from wavefunction import primitives, psi_MO
 
 ## For Python 2 & 3 interoperability (`print` is a statement in Python 2)
 write = stdout.write
@@ -25,7 +25,8 @@ struct = load(stdin)
 
 molecule = struct["molecule"]
 n_atoms = molecule["nb_atoms"]
-shell_coefficients = primitives(struct["comp_details"]["general"]["basis_set"])
+shell_coefficients = [(i, ssh) for i, atom in enumerate(struct["comp_details"]["general"]["basis_set"], 1) for ssh in atom]
+#shell_coefficients = primitives(struct["comp_details"]["general"]["basis_set"])
 
 
 ## Size: gaussian cube protocol
@@ -53,6 +54,7 @@ try:
 		s1, s2, s3 = (2.0**(2+p_npts)/3.0,)*3   if -5 < p_npts < -1 else \
 		             (-p_npts*1e-3/A_to_a0,)*3  if p_npts <= -5 else None
 		p1, p2, p3 = [int(t_x/s1 + 1), int(t_y/s2 + 1), int(t_z/s3 + 1)]
+		s_x, s_y, s_z = s1, s2, s3
 	del p_npts
 
 ## Didn't work - it's a keyword
@@ -70,9 +72,8 @@ job, value = argv[1].split("=")
 if job == "MO":
 	## The function that will be executed for the job, defined here as it
 	## is an invariant of the main loop defined at the end
-	#def discrete(x, y, z):
-	#	
-	#	return psi_MO(shell_coefficients, x, y, z)
+	def discrete(x, y, z):
+		return psi_MO(shell_coefficients, x, y, z)
 
 	## MO is always a list as this allows the same formatting to be used
 	## for both single and multiple orbitals
@@ -137,8 +138,8 @@ l = p3*n_val
 block = ((" {: .5E}"*6 + "\n")*(l//6) + (" {: .5E}"*(l%6) + "\n" if l%6 > 0 else "")).format
 write(block(*([0]*l)))   # testing
 
-#X, Y, Z = [x_min + s_x*n for n in range(p1)], [y_min + s_y*n for n in range(p2)], [z_min + s_z*n for n in range(p3)]
+X, Y, Z = [x_min + s_x*n for n in range(p1)], [y_min + s_y*n for n in range(p2)], [z_min + s_z*n for n in range(p3)]
 
-#for x in X:
-#	for y in Y:
-#		write(block([v for z in Z for v in discrete(x, y, z)]))
+for x in X:
+	for y in Y:
+		write(block(*[v for z in Z for v in discrete(x, y, z)]))
