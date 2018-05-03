@@ -38,9 +38,9 @@ def c(m, lx, ly, lz):
 		ma = abs(m)
 		l = lx + ly + lz
 		j = (lx + ly - ma)/2
-	memo[m,lx,ly,lz] = sqrt(float((fac(2*lx)*fac(2*ly)*fac(2*lz)*fac(l)*fac(l - ma)) / (fac(2*l)*fac(lx)*fac(ly)*fac(lz)*fac(l + ma)))) * 1.0/(2**l*fac(l))  \
-	                 * sum(binomial(l, i)*binomial(i, j)*(-1)**i*fac(2*l - 2*i)/fac(l - ma - 2*i) for i in range((l - ma)//2)) \
-	                 * sum(binomial(j, k)*binomial(ma, lx - 2*k)*(-1)**((ma - lx + 2*k)/2) for k in range(j))
+		memo[m,lx,ly,lz] = sqrt(float((fac(2*lx)*fac(2*ly)*fac(2*lz)*fac(l)*fac(l - ma)) / (fac(2*l)*fac(lx)*fac(ly)*fac(lz)*fac(l + ma)))) * 1.0/(2**l*fac(l))  \
+	                         * sum(binomial(l, i)*binomial(i, j) * (-1)**i*fac(2*l - 2*i)/fac(l - ma - 2*i) for i in range((l - ma)//2 + 1)) \
+	                         * sum(binomial(j, k)*binomial(ma, lx - 2*k)*(-1)**((ma - lx + 2*k)/2) for k in range(j + 1))
 	return memo[m,lx,ly,lz]
 
 def v(m, lx, ly, lz, a, x, y, z):
@@ -88,13 +88,13 @@ def gs(l, m, a, x, y, z):
 ## MO wavefunction
 def psi_MO(shells, x, y, z):
 	sh_to_l = {
-		"S" : 0,
-		"P" : 1,
-		"D" : 2,
-		"F" : 3,
-		"G" : 4
+		u"S" : 0,
+		u"P" : 1,
+		u"D" : 2,
+		u"F" : 3,
+		u"G" : 4
 	}
-	return [sum(ssh[1][0][1]*gs(sh_to_l[ssh[0]], m, ssh[1][0][0], x, y, z) for i, ssh in shells for m in range(-sh_to_l[ssh[0]],sh_to_l[ssh[0]]+1))]
+	return [sum(ssh[1][0][1]*gs(sh_to_l[ssh[0]], m, ssh[1][0][0], x, y, z) for ssh in shells for m in range(-sh_to_l[ssh[0]], sh_to_l[ssh[0]] + 1))]
 
 ## Extraction of primitive exponents for each shell
 ## c.f. CHK-JSON-Shell.pdf
