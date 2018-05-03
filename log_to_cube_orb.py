@@ -79,4 +79,4 @@ elif job == "FDensity":
 elif job == "Potential":
 	pass
 
-main.run_orbkit()
+data = main.run_orbkit()
