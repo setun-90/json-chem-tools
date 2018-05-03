@@ -25,8 +25,8 @@ struct = load(stdin)
 
 molecule = struct["molecule"]
 n_atoms = molecule["nb_atoms"]
+## Temporarily work with redundant subshells (i.e. without S=P hybridization)
 shell_coefficients = [ssh for atom in struct["comp_details"]["general"]["basis_set"] for ssh in atom]
-print([ssh[1][0][1] for ssh in shell_coefficients])
 #shell_coefficients = primitives(struct["comp_details"]["general"]["basis_set"])
 
 
@@ -137,12 +137,9 @@ if job == "MO":
 ## Generate voxel data
 l = p3*n_val
 block = ((" {: .5E}"*6 + "\n")*(l//6) + (" {: .5E}"*(l%6) + "\n" if l%6 > 0 else "")).format
-write(block(*([0]*l)))   # testing
 
-print(discrete(-1,-1,-1))
+X, Y, Z = [x_min + s_x*n for n in range(p1)], [y_min + s_y*n for n in range(p2)], [z_min + s_z*n for n in range(p3)]
 
-#X, Y, Z = [x_min + s_x*n for n in range(p1)], [y_min + s_y*n for n in range(p2)], [z_min + s_z*n for n in range(p3)]
-
-#for x in X:
-#	for y in Y:
-#		write(block(*[v for z in Z for v in discrete(x, y, z)]))
+for x in X:
+	for y in Y:
+		write(block(*[v for z in Z for v in discrete(x, y, z)]))

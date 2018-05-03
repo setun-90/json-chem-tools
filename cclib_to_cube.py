@@ -20,9 +20,9 @@ write = stdout.write
 
 
 ## Set input/output
-from cclib.parser.gaussianparser import Gaussian
-data = Gaussian(argv[3]).parse()
-qc = read.convert_cclib(data)
+from cclib.parser import ccopen
+data = ccopen(argv[3]).parse()
+qc = read.convert_cclib(data,all_mo=True)
 
 
 
@@ -53,9 +53,9 @@ try:
 ## Didn't work - it's a keyword
 except ValueError:
 	## ORBKIT
-	options.adjust_grid = [over_s, 1.0/3.0  if argv[2] == "Coarse" else \
+	grid.adjust_to_geo(qc, over_s, 1.0/3.0  if argv[2] == "Coarse" else \
 	                               1.0/6.0  if argv[2] == "Medium" else \
-	                               1.0/12.0 if argv[2] == "Fine" else None]
+	                               1.0/12.0 if argv[2] == "Fine" else None)
 
 
 
@@ -65,12 +65,12 @@ job, value = argv[1].split("=")
 if job == "MO":
 	## Get list of orbitals
 	try:
-		options.calc_mo = map(int, value.split(","))
+		MO = map(int, value.split(","))
 	except ValueError:
 		if value == "All":
-			options.calc_mo = ["all_mo"]
+			MO = ["all_mo"]
 		elif value in {"HOMO","LUMO"}:
-			options.calc_mo = [value.lower()]
+			MO = [value.lower()]
 
 elif job == "FDensity":
 	pass
@@ -78,6 +78,7 @@ elif job == "FDensity":
 elif job == "Potential":
 	pass
 
-out = core.rho_compute(qc, numproc=4)
+out = core.rho_compute(qc, calc_mo=True, numproc=4)
+#out = core.mo_creator(qc.mo_spec)
 
 output.cube_creator(out, argv[4], qc.geo_info, qc.geo_spec)

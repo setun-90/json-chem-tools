@@ -1,4 +1,5 @@
 #! /usr/bin/env python2.7
+## -*- encoding: utf-8 -*-
 
 ## Structures for calculating atomic and molecular orbital wavefunctions.
 
@@ -12,6 +13,16 @@ from cmath import pi, sqrt, exp, sin, cos
 ## Z === a_s : primitive_exponents|contraction_coefficients ?
 ## c_si      : (alpha|beta)_MO_coefficients ?
 
+def memoize(f):
+	memo = {}
+	def aux(*x):
+		try:
+			return memo[x]
+		except KeyError:
+			memo[x] = f(*x)
+			return memo[x]
+	return aux
+
 def binomial(n, m):
 	try:
 		return fac(n)//(fac(m)*fac(n-m))
@@ -19,6 +30,8 @@ def binomial(n, m):
 		return 0
 
 ## GTO normalization constant
+## Can be memoized because it doesn't depend on position
+@memoize
 def N(a, lx, ly, lz):
 	l = lx + ly + lz
 	return sqrt((2**(2*l)*fac(lx)*fac(ly)*fac(lz)*pow(a, l + 1.5))
@@ -29,19 +42,15 @@ def gc(lx, ly, lz, a, x, y, z):
 	return N(a, lx, ly, lz) * x**lx*y**ly*z**lz * exp(-a*(x**2 + y**2 + z**2))
 
 ## Calculation of coefficient for transforming Cartesian GTO to Spherical GTO
-## This can be memoized for an easy performance gain
+## Can be memoized because it doesn't depend on position
+@memoize
 def c(m, lx, ly, lz):
-	memo = {}
-	try:
-		return memo[m,lx,ly,lz]
-	except KeyError:
-		ma = abs(m)
-		l = lx + ly + lz
-		j = (lx + ly - ma)/2
-		memo[m,lx,ly,lz] = sqrt(float((fac(2*lx)*fac(2*ly)*fac(2*lz)*fac(l)*fac(l - ma)) / (fac(2*l)*fac(lx)*fac(ly)*fac(lz)*fac(l + ma)))) * 1.0/(2**l*fac(l))  \
-	                         * sum(binomial(l, i)*binomial(i, j) * (-1)**i*fac(2*l - 2*i)/fac(l - ma - 2*i) for i in range((l - ma)//2 + 1)) \
-	                         * sum(binomial(j, k)*binomial(ma, lx - 2*k)*(-1)**((ma - lx + 2*k)/2) for k in range(j + 1))
-	return memo[m,lx,ly,lz]
+	ma = abs(m)
+	l = lx + ly + lz
+	j = (lx + ly - ma)/2
+	return sqrt(float((fac(2*lx)*fac(2*ly)*fac(2*lz)*fac(l)*fac(l - ma)) / (fac(2*l)*fac(lx)*fac(ly)*fac(lz)*fac(l + ma)))) * 1.0/(2**l*fac(l))  \
+	     * sum(binomial(l, i)*binomial(i, j) * (-1)**i*fac(2*l - 2*i)/fac(l - ma - 2*i) for i in range((l - ma)//2 + 1)) \
+	     * sum(binomial(j, k)*binomial(ma, lx - 2*k)*(-1)**((ma - lx + 2*k)/2) for k in range(j + 1))
 
 def v(m, lx, ly, lz, a, x, y, z):
 	return c(m,lx,ly,lz)*gc(lx,ly,lz,a,x,y,z)
@@ -67,11 +76,17 @@ vc = {
 	(3, 0): lambda a, x, y, z: v(0,0,0,3,a,x,y,z) - 3.0*(v(0,2,0,1,a,x,y,z) + v(0,0,2,1,a,x,y,z))/(2.0*sqrt(5.0)),
 	(3, 1): lambda a, x, y, z: sqrt(3.0/5.0)*(v(1,1,0,2,a,x,y,z) + 1j*v(1,0,1,2,a,x,y,z)) - sqrt(3.0)*(v(1,3,0,0,a,x,y,z) + 1j*v(1,0,3,0,a,x,y,z))/4.0 - sqrt(3.0)*(v(1,1,2,0,a,x,y,z) + 1j*v(1,2,1,0,a,x,y,z))/(4.0*sqrt(5.0)),
 	(3, 2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,1,a,x,y,z) - v(2,0,2,1,a,x,y,z)) + 1j*v(2,1,1,1,a,x,y,z)/sqrt(2.0),
-	(3, 3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) - 1j*v(3,0,3,0,a,x,y,z)) - 3.0/4.0*(v(3,1,2,0,a,x,y,z) - 1j*v(3,2,1,0,a,x,y,z)),
+	(3, 3): lambda a, x, y, z: (sqrt(5.0)*(v(3,3,0,1,a,x,y,z) - 1j*v(3,0,3,0,a,x,y,z)) - 3.0*(v(3,1,2,0,a,x,y,z) - 1j*v(3,2,1,0,a,x,y,z)))/4.0,
 
+	(4,-4): lambda a, x, y, z: sqrt(35.0/128.0)*(v(4,4,0,0,a,x,y,z) + v(4,0,4,0,a,x,y,z)) - sqrt(27.0/32.0)*v(4,2,2,0,a,x,y,z) - 1j*sqrt(5.0/8.0)*(v(4,3,1,0,a,x,y,z) - v(4,1,3,0,a,x,y,z)),
 	(4,-3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) + 1j*v(3,0,3,1,a,x,y,z)) - 3.0/4.0*(v(3,1,2,1,a,x,y,z) + 1j*v(3,2,1,1,a,x,y,z)),
+	(4,-2): lambda a, x, y, z: sqrt(27.0/56.0)(v(2,2,0,2,a,x,y,z) - v(2,0,2,2,a,x,y,z)) - 3j*v(2,1,1,2,a,x,y,z)/sqrt(14.0) - sqrt(5.0/32.0)*(v(2,4,0,0,a,x,y,z) - v(2,0,4,0,a,x,y,z)) + 1j*sqrt(5.0)*(v(2,3,1,0,a,x,y,z) + v(2,1,3,0,a,x,y,z))/sqrt(56.0),
+	(4,-1): lambda a, x, y, z: sqrt(5.0/7.0)*(v(1,1,0,3,a,x,y,z) - 1j*v(1,0,1,3,a,x,y,z)) - 3.0*(sqrt(5.0)*(v(1,3,0,1,a,x,y,z) - 1j*v(1,0,3,1,a,x,y,z)) - v(1,1,2,1,a,x,y,z) + 1j*v(1,2,1,1,a,x,y,z))/(4.0*sqrt(7.0)),
 	(4, 0): lambda a, x, y, z: v(0,0,0,4,a,x,y,z) + 3.0*(v(0,4,0,0,a,x,y,z) + v(0,0,4,0,a,x,y,z))/8.0 - 3.0*sqrt(3.0)*(v(0,2,0,2,a,x,y,z) + v(0,0,2,2,a,x,y,z) - 0.25*v(0,2,2,0,a,x,y,z))/sqrt(35.0),
-	(4, 3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) - 1j*v(3,0,3,1,a,x,y,z)) - 3.0/4.0*(v(3,1,2,1,a,x,y,z) - 1j*v(3,2,1,1,a,x,y,z)) #,
+	(4, 1): lambda a, x, y, z: sqrt(5.0/7.0)*(v(1,1,0,3,a,x,y,z) + 1j*v(1,0,1,3,a,x,y,z)) - 3.0*(sqrt(5.0)*(v(1,3,0,1,a,x,y,z) + 1j*v(1,0,3,1,a,x,y,z)) - v(1,1,2,1,a,x,y,z) - 1j*v(1,2,1,1,a,x,y,z))/(4.0*sqrt(7.0)),
+	(4, 2): lambda a, x, y, z: sqrt(27.0/56.0)(v(2,2,0,2,a,x,y,z) - v(2,0,2,2,a,x,y,z)) + 3j*v(2,1,1,2,a,x,y,z)/sqrt(14.0) - sqrt(5.0/32.0)*(v(2,4,0,0,a,x,y,z) - v(2,0,4,0,a,x,y,z)) - 1j*sqrt(5.0)*(v(2,3,1,0,a,x,y,z) + v(2,1,3,0,a,x,y,z))/sqrt(56.0),
+	(4, 3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) - 1j*v(3,0,3,1,a,x,y,z)) - 3.0/4.0*(v(3,1,2,1,a,x,y,z) - 1j*v(3,2,1,1,a,x,y,z)),
+	(4, 4): lambda a, x, y, z: sqrt(35.0/128.0)*(v(4,4,0,0,a,x,y,z) + v(4,0,4,0,a,x,y,z)) - sqrt(27.0/32.0)*v(4,2,2,0,a,x,y,z) + 1j*sqrt(5.0/8.0)*(v(4,3,1,0,a,x,y,z) - v(4,1,3,0,a,x,y,z)) #,
 
 #	(5, 0): lambda a, x, y, z: 
 }
