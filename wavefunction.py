@@ -60,33 +60,23 @@ def v(m, lx, ly, lz, a, x, y, z):
 vc = {
 	(0, 0): lambda a, x, y, z: v( 0,0,0,0,a,x,y,z),
 
-	(1,-1): lambda a, x, y, z: (v(1,1,0,0,a,x,y,z) - 1j*v(1,0,1,0,a,x,y,z))/sqrt(2.0),
 	(1, 0): lambda a, x, y, z: v( 0,0,0,1,a,x,y,z),
-	(1, 1): lambda a, x, y, z: (v(1,1,0,0,a,x,y,z) + 1j*v(1,0,1,0,a,x,y,z))/sqrt(2.0),
+	(1, 1): lambda a, x, y, z: sqrt(2.0)*v(1,1,0,0,a,x,y,z),
 
-	(2,-2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,0,a,x,y,z) - v(2,0,2,0,a,x,y,z)) - 1j*v(2,1,1,0,a,x,y,z)/sqrt(2.0),
-	(2,-1): lambda a, x, y, z: (v(1,1,0,1,a,x,y,z) - 1j*v(1,0,1,1,a,x,y,z))/sqrt(2.0),
 	(2, 0): lambda a, x, y, z: v(0,0,0,2,a,x,y,z) - (v(0,2,0,0,a,x,y,z) + v(0,0,2,0,a,x,y,z))/2.0,
-	(2, 1): lambda a, x, y, z: (v(1,1,0,1,a,x,y,z) + 1j*v(1,0,1,1,a,x,y,z))/sqrt(2.0),
-	(2, 2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,0,a,x,y,z) - v(2,0,2,0,a,x,y,z)) + 1j*v(2,1,1,0,a,x,y,z)/sqrt(2.0),
+	(2, 1): lambda a, x, y, z: sqrt(2.0)*v(1,1,0,1,a,x,y,z),
+	(2, 2): lambda a, x, y, z: 2.0*sqrt(3.0/8.0)*(v(2,2,0,0,a,x,y,z) - v(2,0,2,0,a,x,y,z)),
 
-	(3,-3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) + 1j*v(3,0,3,0,a,x,y,z)) - 3.0/4.0*(v(3,1,2,0,a,x,y,z) + 1j*v(3,2,1,0,a,x,y,z)),
-	(3,-2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,1,a,x,y,z) - v(2,0,2,1,a,x,y,z)) - 1j*v(2,1,1,1,a,x,y,z)/sqrt(2.0), 
-	(3,-1): lambda a, x, y, z: sqrt(3.0/5.0)*(v(1,1,0,2,a,x,y,z) - 1j*v(1,0,1,2,a,x,y,z)) - sqrt(3.0)*(v(1,3,0,0,a,x,y,z) - 1j*v(1,0,3,0,a,x,y,z))/4.0 - sqrt(3.0)*(v(1,1,2,0,a,x,y,z) - 1j*v(1,2,1,0,a,x,y,z))/(4.0*sqrt(5.0)), 
 	(3, 0): lambda a, x, y, z: v(0,0,0,3,a,x,y,z) - 3.0*(v(0,2,0,1,a,x,y,z) + v(0,0,2,1,a,x,y,z))/(2.0*sqrt(5.0)),
-	(3, 1): lambda a, x, y, z: sqrt(3.0/5.0)*(v(1,1,0,2,a,x,y,z) + 1j*v(1,0,1,2,a,x,y,z)) - sqrt(3.0)*(v(1,3,0,0,a,x,y,z) + 1j*v(1,0,3,0,a,x,y,z))/4.0 - sqrt(3.0)*(v(1,1,2,0,a,x,y,z) + 1j*v(1,2,1,0,a,x,y,z))/(4.0*sqrt(5.0)),
-	(3, 2): lambda a, x, y, z: sqrt(3.0/8.0)*(v(2,2,0,1,a,x,y,z) - v(2,0,2,1,a,x,y,z)) + 1j*v(2,1,1,1,a,x,y,z)/sqrt(2.0),
-	(3, 3): lambda a, x, y, z: (sqrt(5.0)*(v(3,3,0,1,a,x,y,z) - 1j*v(3,0,3,0,a,x,y,z)) - 3.0*(v(3,1,2,0,a,x,y,z) - 1j*v(3,2,1,0,a,x,y,z)))/4.0,
+	(3, 1): lambda a, x, y, z: 2.0*(sqrt(3.0/5.0)*v(1,1,0,2,a,x,y,z) - sqrt(3.0)*v(1,3,0,0,a,x,y,z)/4.0 - sqrt(3.0)*v(1,1,2,0,a,x,y,z)/(4.0*sqrt(5.0))),
+	(3, 2): lambda a, x, y, z: 2.0*sqrt(3.0/8.0)*(v(2,2,0,1,a,x,y,z) - v(2,0,2,1,a,x,y,z)),
+	(3, 3): lambda a, x, y, z: (sqrt(5.0)*v(3,3,0,1,a,x,y,z) - 3.0*v(3,1,2,0,a,x,y,z))/2.0,
 
-	(4,-4): lambda a, x, y, z: sqrt(35.0/128.0)*(v(4,4,0,0,a,x,y,z) + v(4,0,4,0,a,x,y,z)) - sqrt(27.0/32.0)*v(4,2,2,0,a,x,y,z) - 1j*sqrt(5.0/8.0)*(v(4,3,1,0,a,x,y,z) - v(4,1,3,0,a,x,y,z)),
-	(4,-3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) + 1j*v(3,0,3,1,a,x,y,z)) - 3.0/4.0*(v(3,1,2,1,a,x,y,z) + 1j*v(3,2,1,1,a,x,y,z)),
-	(4,-2): lambda a, x, y, z: sqrt(27.0/56.0)(v(2,2,0,2,a,x,y,z) - v(2,0,2,2,a,x,y,z)) - 3j*v(2,1,1,2,a,x,y,z)/sqrt(14.0) - sqrt(5.0/32.0)*(v(2,4,0,0,a,x,y,z) - v(2,0,4,0,a,x,y,z)) + 1j*sqrt(5.0)*(v(2,3,1,0,a,x,y,z) + v(2,1,3,0,a,x,y,z))/sqrt(56.0),
-	(4,-1): lambda a, x, y, z: sqrt(5.0/7.0)*(v(1,1,0,3,a,x,y,z) - 1j*v(1,0,1,3,a,x,y,z)) - 3.0*(sqrt(5.0)*(v(1,3,0,1,a,x,y,z) - 1j*v(1,0,3,1,a,x,y,z)) - v(1,1,2,1,a,x,y,z) + 1j*v(1,2,1,1,a,x,y,z))/(4.0*sqrt(7.0)),
 	(4, 0): lambda a, x, y, z: v(0,0,0,4,a,x,y,z) + 3.0*(v(0,4,0,0,a,x,y,z) + v(0,0,4,0,a,x,y,z))/8.0 - 3.0*sqrt(3.0)*(v(0,2,0,2,a,x,y,z) + v(0,0,2,2,a,x,y,z) - 0.25*v(0,2,2,0,a,x,y,z))/sqrt(35.0),
-	(4, 1): lambda a, x, y, z: sqrt(5.0/7.0)*(v(1,1,0,3,a,x,y,z) + 1j*v(1,0,1,3,a,x,y,z)) - 3.0*(sqrt(5.0)*(v(1,3,0,1,a,x,y,z) + 1j*v(1,0,3,1,a,x,y,z)) - v(1,1,2,1,a,x,y,z) - 1j*v(1,2,1,1,a,x,y,z))/(4.0*sqrt(7.0)),
-	(4, 2): lambda a, x, y, z: sqrt(27.0/56.0)(v(2,2,0,2,a,x,y,z) - v(2,0,2,2,a,x,y,z)) + 3j*v(2,1,1,2,a,x,y,z)/sqrt(14.0) - sqrt(5.0/32.0)*(v(2,4,0,0,a,x,y,z) - v(2,0,4,0,a,x,y,z)) - 1j*sqrt(5.0)*(v(2,3,1,0,a,x,y,z) + v(2,1,3,0,a,x,y,z))/sqrt(56.0),
-	(4, 3): lambda a, x, y, z: sqrt(5.0)/4.0*(v(3,3,0,1,a,x,y,z) - 1j*v(3,0,3,1,a,x,y,z)) - 3.0/4.0*(v(3,1,2,1,a,x,y,z) - 1j*v(3,2,1,1,a,x,y,z)),
-	(4, 4): lambda a, x, y, z: sqrt(35.0/128.0)*(v(4,4,0,0,a,x,y,z) + v(4,0,4,0,a,x,y,z)) - sqrt(27.0/32.0)*v(4,2,2,0,a,x,y,z) + 1j*sqrt(5.0/8.0)*(v(4,3,1,0,a,x,y,z) - v(4,1,3,0,a,x,y,z)) #,
+	(4, 1): lambda a, x, y, z: 2.0*(sqrt(5.0/7.0)*v(1,1,0,3,a,x,y,z) - 3.0*(sqrt(5.0)*v(1,3,0,1,a,x,y,z) - v(1,1,2,1,a,x,y,z))),
+	(4, 2): lambda a, x, y, z: 2.0*(sqrt(27.0/56.0)*(v(2,2,0,2,a,x,y,z) - v(2,0,2,2,a,x,y,z)) - sqrt(5.0/32.0)*(v(2,4,0,0,a,x,y,z) - v(2,0,4,0,a,x,y,z))),
+	(4, 3): lambda a, x, y, z: (sqrt(5.0)*v(3,3,0,1,a,x,y,z) - 3.0*v(3,1,2,1,a,x,y,z))/4.0,
+	(4, 4): lambda a, x, y, z: 2.0*(sqrt(35.0/128.0)*(v(4,4,0,0,a,x,y,z) + v(4,0,4,0,a,x,y,z)) - sqrt(27.0/32.0)*v(4,2,2,0,a,x,y,z)) #,
 
 #	(5, 0): lambda a, x, y, z: 
 }
@@ -101,7 +91,7 @@ def gs(l, m, a, x, y, z):
 		               + " atomic orbital")
 
 ## MO wavefunction
-def psi_MO(shells, x, y, z):
+def psi_MO(basis_set, x, y, z):
 	sh_to_l = {
 		u"S" : 0,
 		u"P" : 1,
@@ -109,7 +99,7 @@ def psi_MO(shells, x, y, z):
 		u"F" : 3,
 		u"G" : 4
 	}
-	return [sum(ssh[1][0][1]*gs(sh_to_l[ssh[0]], m, ssh[1][0][0], x, y, z) for ssh in shells for m in range(-sh_to_l[ssh[0]], sh_to_l[ssh[0]] + 1))]
+	return [sum(ssh[1][0][1]*gs(sh_to_l[ssh[0]], m, ssh[1][0][0], x, y, z) for ssh in basis_set for m in range(sh_to_l[ssh[0]] + 1))]
 
 ## Extraction of primitive exponents for each shell
 ## c.f. CHK-JSON-Shell.pdf
