@@ -12,6 +12,7 @@ if len(argv) < 5:
 from sys import stdin, stdout
 from math import pi, ceil
 from physics import A_to_a0
+from numpy import ndarray
 from orbkit import options, grid, read, output, core
 
 ## For Python 2 & 3 interoperability (`print` is a statement in Python 2)
@@ -22,7 +23,7 @@ write = stdout.write
 ## Set input/output
 from cclib.parser import ccopen
 data = ccopen(argv[3]).parse()
-qc = read.convert_cclib(data,all_mo=True)
+qc = read.convert_cclib(ccopen(argv[3]).parse(), all_mo=True)
 
 
 
@@ -38,12 +39,11 @@ try:
 	if 0 <= p_npts:
 		if p_npts == 0:
 			p_npts = 80
-		## ORBKIT
 		grid.N_ = [(p_npts,)*3]
+		#grid.
 
 	## Negative: the spacing is given and the number of points is deduced
 	else:
-		## ORBKIT
 		## -1 is not implemented
 		grid.adjust_to_geo(qc, over_s, 2.0**(2+p_npts)/3.0   if -5 < p_npts < -1 else \
 		                               -p_npts*1e-3/A_to_a0  if p_npts <= -5 else None)
@@ -52,7 +52,6 @@ try:
 
 ## Didn't work - it's a keyword
 except ValueError:
-	## ORBKIT
 	grid.adjust_to_geo(qc, over_s, 1.0/3.0  if argv[2] == "Coarse" else \
 	                               1.0/6.0  if argv[2] == "Medium" else \
 	                               1.0/12.0 if argv[2] == "Fine" else None)
@@ -65,20 +64,25 @@ job, value = argv[1].split("=")
 if job == "MO":
 	## Get list of orbitals
 	try:
-		MO = map(int, value.split(","))
+		qc.mo_spec = read.mo_select(qc.mo_spec, map(int, value.split(",")))["mo_spec"]
 	except ValueError:
 		if value == "All":
-			MO = ["all_mo"]
+			qc.mo_spec = read.mo_select(qc.mo_spec, ["all_mo"])["mo_spec"]
 		elif value in {"HOMO","LUMO"}:
-			MO = [value.lower()]
+			qc.mo_spec = read.mo_select(qc.mo_spec, [value.lower()])["mo_spec"]
+	def func(data):
+		return core.rho_compute(qc, calc_mo=True, numproc=4)
 
 elif job == "FDensity":
-	pass
+	def func(data):
+		return core.rho_compute(qc, numproc=4)
 
 elif job == "Potential":
 	pass
 
-out = core.rho_compute(qc, calc_mo=True, numproc=4)
+out = func(qc)
+#out = core.rho_compute(qc, calc_mo=True, numproc=4)
 #out = core.mo_creator(qc.mo_spec)
+#print len(out), len(out[0]), len(out[0][0])
 
-output.cube_creator(out, argv[4], qc.geo_info, qc.geo_spec)
+output.cube_creator(out[0], argv[4], qc.geo_info, qc.geo_spec)
