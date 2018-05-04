@@ -24,14 +24,14 @@ write = stdout.write
 struct = load(stdin)
 
 molecule = struct["molecule"]
+results = struct["results"]
+details = struct["comp_details"]
 n_atoms = molecule["nb_atoms"]
-## Temporarily work with redundant subshells (i.e. without S=P hybridization)
-shell_coefficients = [ssh for atom in struct["comp_details"]["general"]["basis_set"] for ssh in atom]
-#shell_coefficients = primitives(struct["comp_details"]["general"]["basis_set"])
+
 
 
 ## Size: gaussian cube protocol
-temp = map(lambda l: l/A_to_a0, struct["results"]["geometry"]["elements_3D_coords_converged"])
+temp = map(lambda l: l/A_to_a0, results["geometry"]["elements_3D_coords_converged"])
 over_s = 5   ## oversizing, to be tuned
 x_max, y_max, z_max = max(temp[::3]) + over_s, max(temp[1::3]) + over_s, max(temp[2::3]) + over_s
 x_min, y_min, z_min = min(temp[::3]) - over_s, min(temp[1::3]) - over_s, min(temp[2::3]) - over_s
@@ -67,15 +67,25 @@ except ValueError:
 
 
 
+## Temporarily work with redundant subshells (i.e. without S=P hybridization)
+temp_shell = [(i, ssh) for i, atom in enumerate(details["general"]["basis_set"], 1) for ssh in atom]
+sh_to_l = {
+	u"S": 0,
+	u"P": 1,
+	u"D": 2,
+	u"F": 3,
+	u"G": 4,
+	u"H": 5
+}
+shell_coefficients = map(list, zip(*[(sh_to_l[ssh[1][0]], orb[0], orb[1]) for ssh in temp_shell for orb in ssh[1][1]]))
+# = primitives(details["general"]["basis_set"])
+
+
+
 ## Get job type and parameter
 job, value = argv[1].split("=")
 
 if job == "MO":
-	## The function that will be executed for the job, defined here as it
-	## is an invariant of the main loop defined at the end
-	def discrete(x, y, z):
-		return psi_MO(shell_coefficients, x, y, z)
-
 	## MO is always a list as this allows the same formatting to be used
 	## for both single and multiple orbitals
 	HOMO = (sum(molecule["atoms_Z"]) - molecule["charge"])//2
@@ -83,14 +93,20 @@ if job == "MO":
 		MO = [int(value)]
 	except ValueError:
 		if value == "All":
-			MO = [i for i in range(HOMO)]
+			MO = [i for i in range(HOMO + 1)]
 		elif value == "Valence": pass
 		elif value == "Virtuals": pass
 		elif value in {"OccA","OccB"}: pass
 		elif value in {"AMO", "BMO"}: pass
 		elif value in {"HOMO","LUMO"}:
 			MO = [HOMO + (1 if value == "LUMO" else 0)]
+	MO_coefficients = [results["wavefunction"]["MO_coefs"][i] for i in MO]
 	n_val = len(MO)
+
+	## The function that will be executed for the job, defined here as it
+	## is an invariant of the main loop defined at the end
+	def discrete(x, y, z):
+		return psi_MO(shell_coefficients, MO_coefficients, x, y, z)
 
 elif job == "FDensity":
 	#def discrete(x, y, z):
@@ -140,6 +156,8 @@ block = ((" {: .5E}"*6 + "\n")*(l//6) + (" {: .5E}"*(l%6) + "\n" if l%6 > 0 else
 
 X, Y, Z = [x_min + s_x*n for n in range(p1)], [y_min + s_y*n for n in range(p2)], [z_min + s_z*n for n in range(p3)]
 
-for x in X:
-	for y in Y:
-		write(block(*[v for z in Z for v in discrete(x, y, z)]))
+write(block(*[v for z in Z for v in discrete(-1,-1,z)]))
+
+#for x in X:
+#	for y in Y:
+#		write(block(*[v for z in Z for v in discrete(x, y, z)]))

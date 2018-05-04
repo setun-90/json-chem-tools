@@ -121,7 +121,7 @@ line("MicOpt", int, [-1]*n_atoms)
 primitives_by_shell = primitives(details["general"]["basis_set"])
 
 ## Since the extraction is just an optimization (cclib does not coalesce hybridized orbitals),
-## leave this line if discretisations in
+## leave this line for discretisations not taking this into account (like ours!)
 #primitives_by_shell = [(i, ssh) for i, atom in enumerate(details["general"]["basis_set"], 1) for ssh in atom]
 shell_type = {
 	"S"  : 0,
