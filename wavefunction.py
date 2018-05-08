@@ -12,6 +12,9 @@ from cmath import pi, sqrt, exp, sin, cos
 ## Z === a_s : primitive_exponents|contraction_coefficients ?
 ## c_si      : (alpha|beta)_MO_coefficients ?
 
+
+
+## Memoization
 def memoize(f):
 	memo = {}
 	def aux(*x):
@@ -27,6 +30,8 @@ def binomial(n, m):
 		return fac(n)//(fac(m)*fac(n-m))
 	except ValueError:
 		return 0
+
+
 
 ## GTO normalization constant
 ## Can be memoized because it doesn't depend on position

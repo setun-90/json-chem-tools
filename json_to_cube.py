@@ -156,8 +156,8 @@ block = ((" {: .5E}"*6 + "\n")*(l//6) + (" {: .5E}"*(l%6) + "\n" if l%6 > 0 else
 
 X, Y, Z = [x_min + s_x*n for n in range(p1)], [y_min + s_y*n for n in range(p2)], [z_min + s_z*n for n in range(p3)]
 
-write(block(*[v for z in Z for v in discrete(-1,-1,z)]))
 
-#for x in X:
-#	for y in Y:
-#		write(block(*[v for z in Z for v in discrete(x, y, z)]))
+
+for x in X:
+	for y in Y:
+		write(block(*[v for z in Z for v in discrete(x, y, z)]))

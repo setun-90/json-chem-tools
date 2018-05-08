@@ -81,8 +81,6 @@ elif job == "Potential":
 	pass
 
 out = func(qc)
-#out = core.rho_compute(qc, calc_mo=True, numproc=4)
-#out = core.mo_creator(qc.mo_spec)
-#print len(out), len(out[0]), len(out[0][0])
 
-output.cube_creator(out[0], argv[4], qc.geo_info, qc.geo_spec)
+print out[0]
+output.main_output(out[0,:], qc.geo_info, qc.geo_spec, outputname=argv[4], otype='cb')
