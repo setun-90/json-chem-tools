@@ -31,13 +31,11 @@ import orbkit as ok
 from cclib.parser import ccopen
 qc = ok.read.convert_cclib(ccopen(argv[1]).parse(), all_mo=True)
 
-## Number of subprocesses
-numproc = 4
-
 ## Set grid parameters
-ok.grid.N_   = [  50,   52,   54]
-ok.grid.max_ = [ 6.5,  6.5,   6.5]
-ok.grid.min_ = [-6.5, -6.5,  -6.5]
+over_s = 5
+ok.grid.delta_ = [1.0/6.0]*3
+ok.grid.max_ = list(map(lambda a: max(a) + over_s, qc.geo_spec)) #[ 6.5,  6.5,   6.5]
+ok.grid.min_ = list(map(lambda a: min(a) - over_s, qc.geo_spec)) #[-6.5, -6.5,  -6.5]
 
 ## Initialize grid
 ok.grid_init()
@@ -50,7 +48,7 @@ selected_MO = ['homo']
 qc.mo_spec = ok.read.mo_select(qc.mo_spec, selected_MO)["mo_spec"]
 
 ## Calculate MO
-mo_list = ok.rho_compute(qc, calc_mo=True, numproc=numproc)
+mo_list = ok.rho_compute(qc, calc_mo=True, numproc=4)
 
 ## Plot the results
 x, y, z = ok.grid.x, ok.grid.y, ok.grid.z
