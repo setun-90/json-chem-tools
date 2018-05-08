@@ -12,8 +12,7 @@ if len(argv) < 5:
 from sys import stdin, stdout
 from math import pi, ceil
 from physics import A_to_a0
-from numpy import ndarray
-from orbkit import options, grid, read, output, core
+from orbkit import grid, core
 
 ## For Python 2 & 3 interoperability (`print` is a statement in Python 2)
 write = stdout.write
@@ -22,8 +21,8 @@ write = stdout.write
 
 ## Set input/output
 from cclib.parser import ccopen
-data = ccopen(argv[3]).parse()
-qc = read.convert_cclib(ccopen(argv[3]).parse(), all_mo=True)
+from orbkit.read import convert_cclib
+qc = convert_cclib(ccopen(argv[3]).parse(), all_mo=True)
 
 
 
@@ -39,22 +38,31 @@ try:
 	if 0 <= p_npts:
 		if p_npts == 0:
 			p_npts = 80
-		grid.N_ = [(p_npts,)*3]
-		#grid.
+		grid.N_ = [p_npts]*3
 
 	## Negative: the spacing is given and the number of points is deduced
 	else:
 		## -1 is not implemented
-		grid.adjust_to_geo(qc, over_s, 2.0**(2+p_npts)/3.0   if -5 < p_npts < -1 else \
-		                               -p_npts*1e-3/A_to_a0  if p_npts <= -5 else None)
+		#grid.adjust_to_geo(qc, over_s, 2.0**(2+p_npts)/3.0   if -5 < p_npts < -1 else \
+		#                              -p_npts*1e-3/A_to_a0  if p_npts <= -5 else None)
+
+		grid.delta_ = [2.0**(2+p_npts)/3.0   if -5 < p_npts < -1 else \
+		               -p_npts*1e-3/A_to_a0  if p_npts <= -5 else None]*3
 
 	del p_npts
 
 ## Didn't work - it's a keyword
 except ValueError:
-	grid.adjust_to_geo(qc, over_s, 1.0/3.0  if argv[2] == "Coarse" else \
-	                               1.0/6.0  if argv[2] == "Medium" else \
-	                               1.0/12.0 if argv[2] == "Fine" else None)
+	#grid.adjust_to_geo(qc, over_s, 1.0/3.0  if argv[2] == "Coarse" else \
+	#                               1.0/6.0  if argv[2] == "Medium" else \
+	#                               1.0/12.0 if argv[2] == "Fine" else None)
+
+	grid.delta_ = [1.0/3.0  if argv[2] == "Coarse" else \
+	               1.0/6.0  if argv[2] == "Medium" else \
+	               1.0/12.0 if argv[2] == "Fine" else None]*3
+grid.max_ = list(map(lambda a: max(a) + over_s, qc.geo_spec))
+grid.min_ = list(map(lambda a: min(a) - over_s, qc.geo_spec))
+grid.init()
 
 
 
@@ -63,15 +71,17 @@ job, value = argv[1].split("=")
 
 if job == "MO":
 	## Get list of orbitals
+	from orbkit.read import mo_select
 	try:
-		qc.mo_spec = read.mo_select(qc.mo_spec, map(int, value.split(",")))["mo_spec"]
+		qc.mo_spec = mo_select(qc.mo_spec, map(int, value.split(",")))["mo_spec"]
 	except ValueError:
 		if value == "All":
-			qc.mo_spec = read.mo_select(qc.mo_spec, ["all_mo"])["mo_spec"]
+			qc.mo_spec = mo_select(qc.mo_spec, ["all_mo"])["mo_spec"]
 		elif value in {"HOMO","LUMO"}:
-			qc.mo_spec = read.mo_select(qc.mo_spec, [value.lower()])["mo_spec"]
+			qc.mo_spec = mo_select(qc.mo_spec, [value.lower()])["mo_spec"]
 	def func(data):
 		return core.rho_compute(qc, calc_mo=True, numproc=4)
+		#return core.mo_creator(qc.ao_spec, qc.mo_spec)
 
 elif job == "FDensity":
 	def func(data):
@@ -80,7 +90,13 @@ elif job == "FDensity":
 elif job == "Potential":
 	pass
 
+
+
+## Main calculation
 out = func(qc)
 
-print out[0]
-output.main_output(out[0,:], qc.geo_info, qc.geo_spec, outputname=argv[4], otype='cb')
+
+
+## Output
+from orbkit.output import main_output
+main_output(out[0,:], qc.geo_info, qc.geo_spec, outputname=argv[4], otype='cb')
