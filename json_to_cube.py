@@ -77,7 +77,7 @@ sh_to_l = {
 	u"G": 4,
 	u"H": 5
 }
-shell_coefficients = map(list, zip(*[(sh_to_l[ssh[1][0]], orb[0], orb[1]) for ssh in temp_shell for orb in ssh[1][1]]))
+shell_coefficients = map(list, zip(*[(sh_to_l[ssh[1][0]], tuple(orb)) for ssh in temp_shell for orb in ssh[1][1]]))
 # = primitives(details["general"]["basis_set"])
 
 

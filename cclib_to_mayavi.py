@@ -1,25 +1,14 @@
 #! /usr/bin/env python2.7
 ## -*- encoding: utf-8 -*-
 
-'''
-This file is part of orbkit. See the main program or documentation
-for information on the license.
 
-Example file that shows how orbkit can be used as a module. Functions
-of orbkit are used to read a molden file and to calculate a single
-molecular orbital. Finally, show cuts of the orbital in the xy-,
-xz- and yz-plane using matplotlib.
-
-If mayavi2 is installed, you may set the variable mayavi_yes = True
-to see an isosurface plot of the orbital.
-'''
 
 ## Usage
 from sys import argv
 if len(argv) < 2:
-	from sys import exit
-	print "Usage: {} ${{input}}".format(argv[0])
-	exit(0)
+	from sys import stderr, exit
+	stderr.write("Usage: {} ${{input}}".format(argv[0]))
+	exit(1)
 
 mayavi_yes = True
 
@@ -34,8 +23,8 @@ qc = ok.read.convert_cclib(ccopen(argv[1]).parse(), all_mo=True)
 ## Set grid parameters
 over_s = 5
 ok.grid.delta_ = [1.0/6.0]*3
-ok.grid.max_ = list(map(lambda a: max(a) + over_s, qc.geo_spec)) #[ 6.5,  6.5,   6.5]
-ok.grid.min_ = list(map(lambda a: min(a) - over_s, qc.geo_spec)) #[-6.5, -6.5,  -6.5]
+ok.grid.max_ = list(map(lambda a: max(a) + over_s, qc.geo_spec))
+ok.grid.min_ = list(map(lambda a: min(a) - over_s, qc.geo_spec))
 
 ## Initialize grid
 ok.grid_init()

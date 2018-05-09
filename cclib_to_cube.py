@@ -10,16 +10,14 @@ if len(argv) < 5:
 	stderr.write("Usage: {} $job[=$value] $npts ${{input}}.log ${{output}}\n".format(argv[0]))
 	exit(1)
 
-from math import pi, ceil
 from physics import A_to_a0
-from orbkit import grid, core
+from orbkit import grid, core, read, output, extras
 
 
 
 ## Input
 from cclib.parser import ccopen
-from orbkit.read import convert_cclib
-qc = convert_cclib(ccopen(argv[3]).parse(), all_mo=True)
+qc = read.convert_cclib(ccopen(argv[3]).parse(), all_mo=True)
 
 
 
@@ -31,10 +29,11 @@ try:
 	p_npts = int(argv[2])
 	## Two regimes: positive or zero, and negative
 	## Positive or zero: the number of points is given and the spacing is deduced
-	if 0 <= p_npts:
-		if p_npts == 0:
-			p_npts = 80
+	if 0 < p_npts:
 		grid.N_ = [p_npts]*3
+
+	elif p_npts == 0:
+		grid.N_ = [80]*3
 
 	## Negative: the spacing is given and the number of points is deduced
 	else:
@@ -50,8 +49,8 @@ except ValueError:
 	               1.0/6.0  if argv[2] == "Medium" else \
 	               1.0/12.0 if argv[2] == "Fine" else None]*3
 
-grid.max_ = list(map(lambda a: max(a) + over_s, qc.geo_spec))
-grid.min_ = list(map(lambda a: min(a) - over_s, qc.geo_spec))
+grid.max_ = map(lambda a: max(a) + over_s, qc.geo_spec)
+grid.min_ = map(lambda a: min(a) - over_s, qc.geo_spec)
 grid.init()
 
 
@@ -61,21 +60,21 @@ job, value = argv[1].split("=")
 
 if job == "MO":
 	## Get list of orbitals
-	from orbkit.read import mo_select
 	try:
-		qc.mo_spec = mo_select(qc.mo_spec, map(int, value.split(",")))["mo_spec"]
+		mos = map(int, value.split(","))
 	except ValueError:
 		if value == "All":
-			qc.mo_spec = mo_select(qc.mo_spec, ["all_mo"])["mo_spec"]
+			mos = ["all_mo"]
 		elif value in {"HOMO","LUMO"}:
-			qc.mo_spec = mo_select(qc.mo_spec, [value.lower()])["mo_spec"]
+			mos = [value.lower()]
+	#qc.mo_spec = read.mo_select(qc.mo_spec, mos)["mo_spec"]
 	def func(data):
-		return core.rho_compute(qc, calc_mo=True, numproc=4)
-		#return core.mo_creator(qc.ao_spec, qc.mo_spec)
+		#return core.rho_compute(data, calc_mo=True, numproc=4)
+		return extras.calc_mo(data, mos, numproc=4)[0]
 
 elif job == "FDensity":
 	def func(data):
-		return core.rho_compute(qc, numproc=4)
+		return core.rho_compute(data, numproc=4)
 
 elif job == "Potential":
 	pass
@@ -88,5 +87,4 @@ out = func(qc)
 
 
 ## Output
-from orbkit.output import main_output
-main_output(out[0,:], qc.geo_info, qc.geo_spec, outputname=argv[4], otype="cb")
+output.main_output(out[0,:], qc.geo_info, qc.geo_spec, outputname=argv[4], otype="cb")
