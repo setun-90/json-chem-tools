@@ -21,7 +21,7 @@ qc = read.convert_cclib(ccopen(argv[3]).parse(), all_mo=True)
 
 
 
-## Size: gaussian cube protocol
+## Get grid parameters and initialize grid
 over_s = 5   # to be tuned
 
 ## Try to treat size parameter as a number
@@ -55,7 +55,7 @@ grid.init()
 
 
 
-## Get job type and parameter
+## Get job type and parameters
 job, value = argv[1].split("=")
 
 if job == "MO":

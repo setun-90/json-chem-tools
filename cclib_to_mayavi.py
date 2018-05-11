@@ -7,40 +7,68 @@
 from sys import argv
 if len(argv) < 2:
 	from sys import stderr, exit
-	stderr.write("Usage: {} ${{input}}".format(argv[0]))
+	stderr.write("Usage: {} $npts ${{input}}".format(argv[0]))
 	exit(1)
 
 mayavi_yes = True
 
-## Import the functions of orbkit (import function
-## Ok that imports all other functions)
-import orbkit as ok
+from orbkit import grid, core, read, output, extras
 
-## Open files specified by args
+
+
+## Input
 from cclib.parser import ccopen
-qc = ok.read.convert_cclib(ccopen(argv[1]).parse(), all_mo=True)
+qc = read.convert_cclib(ccopen(argv[2]).parse(), all_mo=True)
 
-## Set grid parameters
-over_s = 5
-ok.grid.delta_ = [1.0/6.0]*3
-ok.grid.max_ = list(map(lambda a: max(a) + over_s, qc.geo_spec))
-ok.grid.min_ = list(map(lambda a: min(a) - over_s, qc.geo_spec))
 
-## Initialize grid
-ok.grid_init()
 
-## Print grid information
-print(ok.get_grid())
+## Get grid parameters and initialize grid
+over_s = 5   # to be tuned
+
+## Try to treat size parameter as a number
+try:
+	p_npts = int(argv[1])
+	## Two regimes: positive or zero, and negative
+	## Positive or zero: the number of points is given and the spacing is deduced
+	if 0 < p_npts:
+		grid.N_ = [p_npts]*3
+
+	elif p_npts == 0:
+		grid.N_ = [80]*3
+
+	## Negative: the spacing is given and the number of points is deduced
+	else:
+		## -1 is not implemented
+		grid.delta_ = [2.0**(2+p_npts)/3.0   if -5 < p_npts < -1 else \
+		               -p_npts*1e-3/A_to_a0  if p_npts <= -5 else None]*3
+
+	del p_npts
+
+## Didn't work - parameter is a keyword
+except ValueError:
+	grid.delta_ = [1.0/3.0  if argv[2] == "Coarse" else \
+	               1.0/6.0  if argv[2] == "Medium" else \
+	               1.0/12.0 if argv[2] == "Fine" else None]*3
+#grid.delta_ = [1.0/6.0]*3
+grid.max_ = list(map(lambda a: max(a) + over_s, qc.geo_spec))
+grid.min_ = list(map(lambda a: min(a) - over_s, qc.geo_spec))
+grid.init()
+
+
 
 ## Define the molecular orbital to be calculated
 selected_MO = ['homo']
-qc.mo_spec = ok.read.mo_select(qc.mo_spec, selected_MO)["mo_spec"]
+qc.mo_spec = read.mo_select(qc.mo_spec, selected_MO)["mo_spec"]
 
-## Calculate MO
-mo_list = ok.rho_compute(qc, calc_mo=True, numproc=4)
+
+
+## Main calculation
+mo_list = core.rho_compute(qc, calc_mo=True, numproc=4)
+
+
 
 ## Plot the results
-x, y, z = ok.grid.x, ok.grid.y, ok.grid.z
+x, y, z = grid.x, grid.y, grid.z
 
 if mayavi_yes:
 	## If selected, use mayavi2 to make isosurface plot
@@ -69,9 +97,9 @@ else:
 	import numpy as np
 
 	## Select cuts
-	xd = mo_list[0][ok.grid.N_[0]/2-1,:,:]
-	yd = mo_list[0][:,ok.grid.N_[1]/2-1,:]
-	zd = mo_list[0][:,:,ok.grid.N_[2]/2-1]
+	xd = mo_list[0][grid.N_[0]/2-1,:,:]
+	yd = mo_list[0][:,grid.N_[1]/2-1,:]
+	zd = mo_list[0][:,:,grid.N_[2]/2-1]
 
 	## Plot cuts
 	f, (pic1, pic2, pic3) = \
