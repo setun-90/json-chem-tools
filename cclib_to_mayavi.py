@@ -5,9 +5,9 @@
 
 ## Usage
 from sys import argv
-if len(argv) < 2:
+if len(argv) < 3:
 	from sys import stderr, exit
-	stderr.write("Usage: {} $npts ${{input}}".format(argv[0]))
+	stderr.write("Usage: {} $npts ${{input}}\n".format(argv[0]))
 	exit(1)
 
 mayavi_yes = True
@@ -49,7 +49,7 @@ except ValueError:
 	grid.delta_ = [1.0/3.0  if argv[2] == "Coarse" else \
 	               1.0/6.0  if argv[2] == "Medium" else \
 	               1.0/12.0 if argv[2] == "Fine" else None]*3
-#grid.delta_ = [1.0/6.0]*3
+
 grid.max_ = list(map(lambda a: max(a) + over_s, qc.geo_spec))
 grid.min_ = list(map(lambda a: min(a) - over_s, qc.geo_spec))
 grid.init()
@@ -77,20 +77,19 @@ if mayavi_yes:
 		from enthought.mayavi import mlab
 		maya = True
 	except Exception:
-		pass
+		print("import enthought.mayavi failed -- trying mayavi")
 	try:
 		from mayavi import mlab
 		maya = True
 	except Exception:
-		pass
+		print("import mayavi failed")
 
-	if not maya:
-		print("error importing mayavi")
-	else:
+	if maya:
 		src = mlab.pipeline.scalar_field(mo_list[0])
-		mlab.pipeline.iso_surface(src, contours=[0.001, ], opacity=0.3, color=(0, 0, 0.8))
+		mlab.pipeline.iso_surface(src, contours=[ 0.001, ], opacity=0.3, color=(0, 0, 0.8))
 		mlab.pipeline.iso_surface(src, contours=[-0.001, ], opacity=0.3, color=(0.8, 0, 0))
 		mlab.show()
+
 else:
 	## Use matplotlib to show cuts of the molecular orbitals
 	import matplotlib.pyplot as plt
@@ -102,23 +101,19 @@ else:
 	zd = mo_list[0][:,:,grid.N_[2]/2-1]
 
 	## Plot cuts
-	f, (pic1, pic2, pic3) = \
-	    plt.subplots(3,1,sharex=True,sharey=True,figsize=(6,14))
-	pic1.contour(z,y,xd,50,linewidths=0.5,colors='k')
-	pic1.contourf(\
-	    z,y,xd,50,cmap=plt.cm.rainbow,vmax=abs(xd).max(),vmin=-abs(xd).max())
+	f, (pic1, pic2, pic3) = plt.subplots(3, 1, sharex=True, sharey=True, figsize=(6,14))
+	pic1.contour(z, y, xd, 50, linewidths=0.5, colors='k')
+	pic1.contourf(z, y, xd, 50, cmap=plt.cm.rainbow, vmax=abs(xd).max(), vmin=-abs(xd).max())
 	pic1.set_xlabel('z')
 	pic1.set_ylabel('y')
 
-	pic2.contour(z,x,yd,50,linewidths=0.5,colors='k')
-	pic2.contourf(\
-	    z,x,yd,50,cmap=plt.cm.rainbow,vmax=abs(yd).max(),vmin=-abs(yd).max())
+	pic2.contour(z, x, yd, 50, linewidths=0.5, colors='k')
+	pic2.contourf(z, x, yd, 50, cmap=plt.cm.rainbow, vmax=abs(yd).max(), vmin=-abs(yd).max())
 	pic2.set_xlabel('z')
 	pic2.set_ylabel('x')
 
-	pic3.contour(y,x,zd,50,linewidths=0.5,colors='k')
-	pic3.contourf(\
-	    y,x,zd,50,cmap=plt.cm.rainbow,vmax=abs(zd).max(),vmin=-abs(zd).max())
+	pic3.contour(y, x, zd, 50, linewidths=0.5, colors='k')
+	pic3.contourf(y, x, zd, 50, cmap=plt.cm.rainbow, vmax=abs(zd).max(), vmin=-abs(zd).max())
 	pic3.set_xlabel('y')
 	pic3.set_ylabel('x')
 
