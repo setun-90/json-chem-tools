@@ -4,14 +4,15 @@
 
 
 ## Usage
-from sys import argv, stderr
+from sys import argv
 if len(argv) < 3:
+	from sys import stderr, exit
 	stderr.write("Usage: {} $job[=$value] $npts < ${{input}}.json > ${{output}}.cube\n".format(argv[0]))
 	exit(1)
 
 from sys import stdin, stdout
+#from numpy import 
 from json import load
-from math import pi, ceil
 from physics import A_to_a0
 from wavefunction import primitives, psi_MO
 
@@ -63,7 +64,7 @@ except ValueError:
 	s1, s2, s3 = (1.0/3.0,)*3  if argv[2] == "Coarse" else \
 	             (1.0/6.0,)*3  if argv[2] == "Medium" else \
 	             (1.0/12.0,)*3 if argv[2] == "Fine" else None
-	p1, p2, p3 = sorted([t_x/s1, t_y/s2, t_z/s3])
+	p1, p2, p3 = [int(t_x/s1 + 1), int(t_y/s2 + 1), int(t_z/s3 + 1)]
 
 
 
