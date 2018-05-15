@@ -22,7 +22,7 @@ qc = read.convert_cclib(ccopen(argv[3]).parse(), all_mo=True)
 
 
 ## Get grid parameters and initialize grid
-over_s = 5   # to be tuned
+over_s = 7   # to be tuned
 
 ## Try to treat size parameter as a number
 try:
@@ -61,6 +61,9 @@ grid.init()
 
 
 ## Get job type and parameters
+from orbkit import options
+options.numproc = 4
+
 val = argv[1].split("=")
 job = val[0]
 
@@ -74,10 +77,12 @@ if job == "MO":
 			mos = ["all_mo"]
 		elif value in {"HOMO","LUMO"}:
 			mos = [value.lower()]
+
 	#qc.mo_spec = read.mo_select(qc.mo_spec, mos)["mo_spec"]
+
 	def func(data):
-		#return core.rho_compute(data, calc_mo=True, numproc=4)
-		return extras.calc_mo(data, mos, numproc=4)[0]
+		#return core.rho_compute(data, calc_mo=True)[0]
+		return extras.calc_mo(data, mos)[0]
 
 elif job == "FDensity":
 	try:
@@ -87,6 +92,8 @@ elif job == "FDensity":
 		## Default is SCF
 		## (Useles for now, but keep it for later)
 		opt = "SCF"
+	mos = ["1:homo+1"]
+	qc.mo_spec = read.mo_select(qc.mo_spec, mos)["mo_spec"]	
 
 	def func(data):
 		return core.rho_compute(data, numproc=4)
@@ -104,14 +111,19 @@ out = func(qc)
 ## Output
 try:
 	## Try outputting to file
-	output.main_output(out[0,:], qc.geo_info, qc.geo_spec, outputname=argv[4], otype="cb")
+	output.main_output(out, qc.geo_info, qc.geo_spec, outputname=argv[4], otype="cb")
+	## Necessary because IndexError could trap on `out` instead of on `argv`
+	## (`out` is currently unstable because of differing outputs between
+	##  `rho_compute` and `calc_mo`)
+	print "Canarie"
+
 except IndexError:
 	## No filename supplied - it's a visualisation
 	x, y, z = grid.x, grid.y, grid.z
 
 	## Holdover from the example code from which this was originally derived
 	## Set to True once mayavi works
-	mayavi_yes = False
+	mayavi_yes = True
 
 	if mayavi_yes:
 		## If selected, use mayavi2 to make isosurface plot
@@ -128,9 +140,19 @@ except IndexError:
 			print("import mayavi failed")
 
 		if maya:
+			## Calculate best fitting plane
+			from numpy import cov, mean, linalg
+			from math import sqrt, atan2
+			eival, eivec = linalg.eig(cov((qc.geo_spec - mean(qc.geo_spec, axis=0)).T))
+			normal, point = eivec[:,-1], mean(qc.geo_spec, axis=0)
+			r_p = sqrt(normal[0]**2 + normal[1]**2)
+			r = sqrt(r_p**2 + normal[2]**2)
+			a, e = atan2(normal[0], normal[1]), atan2(r, r_p)
+
 			src = mlab.pipeline.scalar_field(out[0])
 			mlab.pipeline.iso_surface(src, contours=[ 0.001, ], opacity=0.3, color=(0, 0, 0.8))
 			mlab.pipeline.iso_surface(src, contours=[-0.001, ], opacity=0.3, color=(0.8, 0, 0))
+			mlab.view(azimuth=a, elevation=e + 60)
 			mlab.show()
 
 	else:
