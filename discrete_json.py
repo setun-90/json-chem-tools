@@ -11,7 +11,7 @@ if len(argv) < 3:
 	exit(1)
 
 from sys import stdin, stdout
-from numpy import ndarray, linspace
+#from numpy import ndarray, linspace
 from json import load
 from physics import A_to_a0
 from wavefunction import primitives, psi_MO
@@ -55,7 +55,7 @@ try:
 		## -1 is not implemented
 		s1, s2, s3 = (2.0**(2+p_npts)/3.0,)*3   if -5 < p_npts < -1 else \
 		             (-p_npts*1e-3/A_to_a0,)*3  if p_npts <= -5 else None
-		p1, p2, p3 = [int(t_x/s1 + 1), int(t_y/s2 + 1), int(t_z/s3 + 1)]
+		p1, p2, p3 = int(t_x/s1 + 1), int(t_y/s2 + 1), int(t_z/s3 + 1)
 		s_x, s_y, s_z = s1, s2, s3
 	del p_npts
 
@@ -64,7 +64,7 @@ except ValueError:
 	s1, s2, s3 = (1.0/3.0,)*3  if argv[2] == "Coarse" else \
 	             (1.0/6.0,)*3  if argv[2] == "Medium" else \
 	             (1.0/12.0,)*3 if argv[2] == "Fine" else None
-	p1, p2, p3 = [int(t_x/s1 + 1), int(t_y/s2 + 1), int(t_z/s3 + 1)]
+	p1, p2, p3 = int(t_x/s1 + 1), int(t_y/s2 + 1), int(t_z/s3 + 1)
 
 ## Configure grid
 X, Y, Z = [x_min + s_x*n for n in range(p1)], [y_min + s_y*n for n in range(p2)], [z_min + s_z*n for n in range(p3)]

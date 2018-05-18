@@ -69,20 +69,13 @@ job = val[0]
 
 if job == "MO":
 	## Get list of orbitals
-	value = val[1]
-	try:
-		mos = map(int, value.split(","))
-	except ValueError:
-		if value == "All":
-			mos = ["all_mo"]
-		elif value in {"HOMO","LUMO"}:
-			mos = [value.lower()]
+	mos = val[1].split(",")
 
-	#qc.mo_spec = read.mo_select(qc.mo_spec, mos)["mo_spec"]
+	qc.mo_spec = read.mo_select(qc.mo_spec, mos)["mo_spec"]
 
 	def func(data):
-		#return core.rho_compute(data, calc_mo=True)[0]
-		return extras.calc_mo(data, mos)[0]
+		return core.rho_compute(data, calc_mo=True)
+		#return extras.calc_mo(data, mos)[0]
 
 elif job == "FDensity":
 	try:
@@ -109,86 +102,92 @@ out = func(qc)
 
 
 ## Output
-try:
+#try
 	## Try outputting to file
-	output.main_output(out, qc.geo_info, qc.geo_spec, outputname=argv[4], otype="cb")
+#	output.main_output(out, qc.geo_info, qc.geo_spec, outputname=argv[4], otype="cb")
 	## Necessary because IndexError could trap on `out` instead of on `argv`
 	## (`out` is currently unstable because of differing outputs between
 	##  `rho_compute` and `calc_mo`)
-	print "Canarie"
+#	print "Canarie"
 
-except IndexError:
-	## No filename supplied - it's a visualisation
-	x, y, z = grid.x, grid.y, grid.z
+#except IndexError:
+## No filename supplied - it's a visualisation
+x, y, z = grid.x, grid.y, grid.z
 
-	## Holdover from the example code from which this was originally derived
-	## Set to True once mayavi works
-	mayavi_yes = True
+## Holdover from the example code from which this was originally derived
+## Set to True once mayavi works
+mayavi_yes = True
 
-	if mayavi_yes:
-		## If selected, use mayavi2 to make isosurface plot
-		maya = False
-		try:
-			from enthought.mayavi import mlab
-			maya = True
-		except Exception:
-			print("import enthought.mayavi failed -- trying mayavi")
-		try:
-			from mayavi import mlab
-			maya = True
-		except Exception:
-			print("import mayavi failed")
+if mayavi_yes:
+	## If selected, use mayavi2 to make isosurface plot
+	maya = False
+	try:
+		from enthought.mayavi import mlab
+		maya = True
+	except Exception:
+		print("import enthought.mayavi failed -- trying mayavi")
+	try:
+		from mayavi import mlab
+		maya = True
+	except Exception:
+		print("import mayavi failed")
 
-		if maya:
-			## Calculate best fitting plane
-			from numpy import cov, mean, linalg
-			from math import sqrt, atan2
-			eival, eivec = linalg.eig(cov((qc.geo_spec - mean(qc.geo_spec, axis=0)).T))
-			normal, point = eivec[:,-1], mean(qc.geo_spec, axis=0)
-			r_p = sqrt(normal[0]**2 + normal[1]**2)
-			r = sqrt(r_p**2 + normal[2]**2)
-			a, e = atan2(normal[0], normal[1]), atan2(r, r_p)
+	if maya:
+		## Calculate best fitting plane
+		from numpy import cov, mean, linalg
+		from math import sqrt, atan2
+		eival, eivec = linalg.eig(cov((qc.geo_spec - mean(qc.geo_spec, axis=0)).T))
+		normal, point = eivec[:,-1], mean(qc.geo_spec, axis=0)
+		r_p = sqrt(normal[0]**2 + normal[1]**2)
+		r = sqrt(r_p**2 + normal[2]**2)
+		a, e = atan2(normal[0], normal[1]), atan2(r, r_p)
 
-			src = mlab.pipeline.scalar_field(out[0])
-			mlab.pipeline.iso_surface(src, contours=[ 0.001, ], opacity=0.3, color=(0, 0, 0.8))
-			mlab.pipeline.iso_surface(src, contours=[-0.001, ], opacity=0.3, color=(0.8, 0, 0))
-			mlab.view(azimuth=a, elevation=e + 60)
-			mlab.show()
+		mlab.figure(bgcolor=(1,1,1))
+		mlab.view(azimuth=a, elevation=e)
+		for i, series in enumerate(out):
+			src = mlab.pipeline.scalar_field(series)
+			mlab.pipeline.iso_surface(src, contours=[ 0.05, ], opacity=0.7, color=(0.4, 0, 0.235))
+			mlab.pipeline.iso_surface(src, contours=[-0.05, ], opacity=0.7, color=(0.95, 0.95, 0.95))
+			
+			P_x, P_y, P_z = list(map(list, zip(*qc.geo_spec)))
+			mlab.points3d(P_x, P_y, P_z, color=(0,0,1), mode="sphere", scale_factor=1)
+			mlab.savefig("./{}-{}.png".format(argv[4], i))
+			mlab.clf()
 
-	else:
-		## Use matplotlib to show cuts of the molecular orbitals
-		import matplotlib.pyplot as plt
-		import numpy as np
+else:
+	## Use matplotlib to show cuts of the molecular orbitals
+	import matplotlib.pyplot as plt
+	import numpy as np
 
-		## Select cuts
-		xd = out[0][grid.N_[0]/2-1,:,:]
-		yd = out[0][:,grid.N_[1]/2-1,:]
-		zd = out[0][:,:,grid.N_[2]/2-1]
+	## Select cuts
+	xd = out[0][grid.N_[0]/2-1,:,:]
+	yd = out[0][:,grid.N_[1]/2-1,:]
+	zd = out[0][:,:,grid.N_[2]/2-1]
 
-		## Plot cuts
-		f, (pic1, pic2, pic3) = plt.subplots(3, 1, sharex=True, sharey=True, figsize=(6,14))
-		pic1.contour(z, y, xd, 50, linewidths=0.5, colors='k')
-		pic1.contourf(z, y, xd, 50, cmap=plt.cm.rainbow, vmax=abs(xd).max(), vmin=-abs(xd).max())
-		pic1.set_xlabel('z')
-		pic1.set_ylabel('y')
+	## Plot cuts
+	f, (pic1, pic2, pic3) = plt.subplots(3, 1, sharex=True, sharey=True, figsize=(6,14))
+	pic1.contour(z, y, xd, 50, linewidths=0.5, colors='k')
+	pic1.contourf(z, y, xd, 50, cmap=plt.cm.rainbow, vmax=abs(xd).max(), vmin=-abs(xd).max())
+	pic1.set_xlabel('z')
+	pic1.set_ylabel('y')
 
-		pic2.contour(z, x, yd, 50, linewidths=0.5, colors='k')
-		pic2.contourf(z, x, yd, 50, cmap=plt.cm.rainbow, vmax=abs(yd).max(), vmin=-abs(yd).max())
-		pic2.set_xlabel('z')
-		pic2.set_ylabel('x')
+	pic2.contour(z, x, yd, 50, linewidths=0.5, colors='k')
+	pic2.contourf(z, x, yd, 50, cmap=plt.cm.rainbow, vmax=abs(yd).max(), vmin=-abs(yd).max())
+	pic2.set_xlabel('z')
+	pic2.set_ylabel('x')
 
-		pic3.contour(y, x, zd, 50, linewidths=0.5, colors='k')
-		pic3.contourf(y, x, zd, 50, cmap=plt.cm.rainbow, vmax=abs(zd).max(), vmin=-abs(zd).max())
-		pic3.set_xlabel('y')
-		pic3.set_ylabel('x')
+	pic3.contour(y, x, zd, 50, linewidths=0.5, colors='k')
+	pic3.contourf(y, x, zd, 50, cmap=plt.cm.rainbow, vmax=abs(zd).max(), vmin=-abs(zd).max())
+	pic3.set_xlabel('y')
+	pic3.set_ylabel('x')
 
-		## Following options applied for all subplots as they share x- and y-axis
-		pic1.xaxis.set_ticks(np.arange(-5,6,5))
-		pic1.yaxis.set_ticks(np.arange(-5,6,5))
-		pic1.set_aspect('equal')
+	## Following options applied for all subplots as they share x- and y-axis
+	pic1.xaxis.set_ticks(np.arange(-5,6,5))
+	pic1.yaxis.set_ticks(np.arange(-5,6,5))
+	pic1.set_aspect('equal')
 
-		## Plot
-		f.subplots_adjust(left=0.15,bottom=0.05,top=0.95,right=0.95)
-		f.show()
+	## Plot
+	f.subplots_adjust(left=0.15,bottom=0.05,top=0.95,right=0.95)
+	f.show()
 
-		raw_input("Press Enter to continue")
+	raw_input("Press Enter to continue")
