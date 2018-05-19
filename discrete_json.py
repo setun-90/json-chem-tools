@@ -91,22 +91,22 @@ shell_coefficients = map(list, zip(*[(sh_to_l[ssh[1][0]], tuple(orb)) for ssh in
 job, value = argv[1].split("=")
 
 if job == "MO":
-	## MO is always a list as this allows the same formatting to be used
+	## MOs is always a list as this allows the same formatting to be used
 	## for both single and multiple orbitals
 	HOMO = (sum(molecule["atoms_Z"]) - molecule["charge"])//2
 	try:
-		MO = [int(value)]
+		MOs = [int(value)]
 	except ValueError:
 		if value == "All":
-			MO = range(HOMO + 1)
+			MOs = range(HOMO + 1)
 		elif value == "Valence": pass
 		elif value == "Virtuals": pass
 		elif value in {"OccA","OccB"}: pass
 		elif value in {"AMO", "BMO"}: pass
 		elif value in {"HOMO","LUMO"}:
-			MO = [HOMO + (1 if value == "LUMO" else 0)]
-	MO_coefficients = [results["wavefunction"]["MO_coefs"][i] for i in MO]
-	n_val = len(MO)
+			MOs = [HOMO + (1 if value == "LUMO" else 0)]
+	MO_coefficients = [results["wavefunction"]["MO_coefs"][i] for i in MOs]
+	n_val = len(MOs)
 
 	## The function that will be executed for the job, defined here as it
 	## is an invariant of the main loop defined at the end
@@ -114,6 +114,9 @@ if job == "MO":
 		return psi_MO(shell_coefficients, MO_coefficients, x, y, z)
 
 elif job == "FDensity":
+	HOMO = (sum(molecule["atoms_Z"]) - molecule["charge"])//2
+	## The density is calculated with the HOMO
+	MOs = results["wavefunction"]["MO_coefs"][HOMO]
 	#def discrete(x, y, z):
 	#	
 	#	return 
@@ -149,7 +152,7 @@ for a, p in zip(molecule["atoms_Z"], molecule["starting_geometry"]):
 if job == "MO":
 	write("{:> 5d}".format(n_val))
 	## TODO: check formatting in case of multiple orbitals
-	for o in MO:
+	for o in MOs:
 		write("  {:> 3d}".format(o))
 	write("\n")
 
@@ -161,6 +164,7 @@ block = ((" {: .5E}"*6 + "\n")*(l//6) + (" {: .5E}"*(l%6) + "\n" if l%6 > 0 else
 
 
 
+## TODO: rewrite to allow either output to file or visualisation
 for x in X:
 	for y in Y:
 		write(block(*[v for z in Z for v in discrete(x, y, z)]))

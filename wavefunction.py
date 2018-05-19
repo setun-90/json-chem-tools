@@ -6,13 +6,6 @@
 from math import factorial as fac, fabs
 from cmath import pi, sqrt, exp, sin, cos
 
-## o_i(N) = S_s(c_si x_s(N))(M)
-## x_s === G_s(r; a_s, R_s) = S_k(f(r) e^(-a_s|r - R_s|^2)
-## f(r) = 
-
-## Z === a_s : primitive_exponents|contraction_coefficients ?
-## c_si      : (alpha|beta)_MO_coefficients ?
-
 
 
 ## Memoization
@@ -63,9 +56,9 @@ def v(m, lx, ly, lz, bs, x, y, z):
 ## Cartesian-to-Spherical GTO map
 ## c.f. H. B. Schlegel and M. J. Frisch, Int. J. of Quantum Chemistry, 54, 83-87 (1995)
 vc = {
-	(0, 0): lambda bs, x, y, z: v( 0,0,0,0,bs,x,y,z),
+	(0, 0): lambda bs, x, y, z: v(0,0,0,0,bs,x,y,z),
 
-	(1, 0): lambda bs, x, y, z: v( 0,0,0,1,bs,x,y,z),
+	(1, 0): lambda bs, x, y, z: v(0,0,0,1,bs,x,y,z),
 	(1, 1): lambda bs, x, y, z: sqrt(2.0)*v(1,1,0,0,bs,x,y,z),
 
 	(2, 0): lambda bs, x, y, z: v(0,0,0,2,bs,x,y,z) - (v(0,2,0,0,bs,x,y,z) + v(0,0,2,0,bs,x,y,z))/2.0,
