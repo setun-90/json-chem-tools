@@ -11,7 +11,7 @@ if len(argv) < 3:
 	exit(1)
 
 from sys import stdin, stdout
-#from numpy import ndarray, linspace
+from numpy import ndarray, linspace, arange
 from json import load
 from physics import A_to_a0
 from wavefunction import primitives, psi_MO
@@ -48,15 +48,15 @@ try:
 		if p_npts == 0:
 			p_npts = 80
 		p1, p2, p3 = (p_npts,)*3
-		s_x, s_y, s_z = t_x/p1, t_y/p2, t_z/p3
-		s1, s2, s3 = sorted([s_x, s_y, s_z])
+		s1, s2, s3 = t_x/p1, t_y/p2, t_z/p3
+		#X, Y, Z = linspace(x_min, x_max, p1), linspace(y_min, y_max, p2), linspace(z_min, z_max, p3)
 	## Negative: the spacing is given and the number of points is deduced
 	else:
 		## -1 is not implemented
 		s1, s2, s3 = (2.0**(2+p_npts)/3.0,)*3   if -5 < p_npts < -1 else \
 		             (-p_npts*1e-3/A_to_a0,)*3  if p_npts <= -5 else None
-		p1, p2, p3 = int(t_x/s1 + 1), int(t_y/s2 + 1), int(t_z/s3 + 1)
-		s_x, s_y, s_z = s1, s2, s3
+		p1, p2, p3 = int(t_x/s1) + 1, int(t_y/s2) + 1, int(t_z/s3) + 1
+		#X, Y, Z = arange(x_min, x_max, s1), arange(y_min, y_max, s2), arange(z_min, z_max, s3)
 	del p_npts
 
 ## Didn't work - it's a keyword
@@ -64,11 +64,11 @@ except ValueError:
 	s1, s2, s3 = (1.0/3.0,)*3  if argv[2] == "Coarse" else \
 	             (1.0/6.0,)*3  if argv[2] == "Medium" else \
 	             (1.0/12.0,)*3 if argv[2] == "Fine" else None
+	#X, Y, Z = arange(x_min, x_max, s1), arange(y_min, y_max, s2), arange(z_min, z_max, s3)
 	p1, p2, p3 = int(t_x/s1 + 1), int(t_y/s2 + 1), int(t_z/s3 + 1)
 
 ## Configure grid
-X, Y, Z = [x_min + s_x*n for n in range(p1)], [y_min + s_y*n for n in range(p2)], [z_min + s_z*n for n in range(p3)]
-#X, Y, Z = linspace(x_min, x_max, s_x), linspace(y_min, y_max, s_y), linspace(z_min, z_max, s_z)
+X, Y, Z = [x_min + s1*n for n in range(p1)], [y_min + s2*n for n in range(p2)], [z_min + s3*n for n in range(p3)]
 
 
 
@@ -135,25 +135,24 @@ write(" MO coefficients\n" if job == "MO" else
       " Electrostatic potential from Total SCF Density\n" if job == "Potential" and value == "SCF" else
       " Electron density from Total SCF Density\n" if job == "FDensity" and value == "SCF" else None)
 
-write("{:> 5d}{:>12.6f}{:>12.6f}{:>12.6f}{:>5d}\n".format(-n_atoms if job == "MO" else n_atoms, x_min, y_min, z_min, n_val))
+write(" {:>4d}{:>12.6f}{:>12.6f}{:>12.6f}{:>5d}\n".format(-n_atoms if job == "MO" else n_atoms, x_min, y_min, z_min, n_val))
 
-line = "{:> 5d}{:>12.6f}{:>12.6f}{:>12.6f}\n".format
-write(line(p1, s1, 0, 0))
-write(line(p2, 0, s2, 0))
-write(line(p3, 0, 0, s3))
+line = " {:>4d}{:>12.6f}{:>12.6f}{:>12.6f}\n".format
+write(line(p1, s1, 0, 0)
+    + line(p2, 0, s2, 0)
+    + line(p3, 0, 0, s3))
 
-line = "{:> 5d}{:>12.6f}{:>12.6f}{:>12.6f}{:>12.6f}\n".format
 for a, p in zip(molecule["atoms_Z"], molecule["starting_geometry"]):
-	write(line(a, a, p[0], p[1], p[2]))
+	write(" {:>4d}{:>12.6f}{:>12.6f}{:>12.6f}{:>12.6f}\n".format(a, a, p[0], p[1], p[2]))
 
 
 
 ## Specific to MO orbitals (c.f. cubegen documentation)
 if job == "MO":
-	write("{:> 5d}".format(n_val))
+	write("{:>5d}".format(n_val))
 	## TODO: check formatting in case of multiple orbitals
 	for o in MOs:
-		write("  {:> 3d}".format(o))
+		write("{:>5d}".format(o))
 	write("\n")
 
 
@@ -165,6 +164,7 @@ block = ((" {: .5E}"*6 + "\n")*(l//6) + (" {: .5E}"*(l%6) + "\n" if l%6 > 0 else
 
 
 ## TODO: rewrite to allow either output to file or visualisation
+#print X, Y, Z
 for x in X:
 	for y in Y:
 		write(block(*[v for z in Z for v in discrete(x, y, z)]))

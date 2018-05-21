@@ -32,8 +32,8 @@ def binomial(n, m):
 @memoize
 def N(a, lx, ly, lz):
 	l = lx + ly + lz
-	return sqrt((2**(2*l)*fac(lx)*fac(ly)*fac(lz)*pow(a, l + 1.5))
-	           /(fac(2*lx)*fac(2*ly)*fac(2*lz)*pow(pi, 1.5)))
+	return sqrt(float((2**(2*l)*fac(lx)*fac(ly)*fac(lz)*pow(a, l + 1.5))
+	                 /(fac(2*lx)*fac(2*ly)*fac(2*lz)*pow(pi, 1.5))))
 
 ## Cartesian GTO angular part (normalized & contracted)
 def gc(lx, ly, lz, bs, x, y, z):
