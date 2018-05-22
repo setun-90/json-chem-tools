@@ -37,9 +37,7 @@ try:
 
 	## Negative: the spacing is given and the number of points is deduced
 	else:
-		## -1 is not implemented
-		grid.delta_ = [2.0**(2+p_npts)/3.0   if -5 < p_npts < -1 else \
-		               -p_npts*1e-3/A_to_a0  if p_npts <= -5 else None]*3
+		grid.delta_ = [1.0(-p_npts)]*3
 
 	del p_npts
 
@@ -75,7 +73,6 @@ if job == "MO":
 
 	def func(data):
 		return core.rho_compute(data, calc_mo=True)
-		#return extras.calc_mo(data, mos)[0]
 
 elif job == "FDensity":
 	try:
@@ -105,10 +102,6 @@ out = func(qc)
 #try
 	## Try outputting to file
 #	output.main_output(out, qc.geo_info, qc.geo_spec, outputname=argv[4], otype="cb")
-	## Necessary because IndexError could trap on `out` instead of on `argv`
-	## (`out` is currently unstable because of differing outputs between
-	##  `rho_compute` and `calc_mo`)
-#	print "Canarie"
 
 #except IndexError:
 ## No filename supplied - it's a visualisation
