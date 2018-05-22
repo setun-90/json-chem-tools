@@ -41,23 +41,21 @@ t_x, t_y, t_z = x_max - x_min, y_max - y_min, z_max - z_min
 ## (p|s).
 ## Try to treat it as a number
 try:
-	p_npts = int(argv[2])
+	par = int(argv[2])
 	## Two regimes: positive or zero, and negative
 	## Positive or zero: the number of points is given and the spacing is deduced
-	if 0 <= p_npts:
-		if p_npts == 0:
-			p_npts = 80
-		p1, p2, p3 = (p_npts,)*3
+	if 0 <= par:
+		if par == 0:
+			par = 80
+		p1, p2, p3 = (par,)*3
 		s1, s2, s3 = t_x/p1, t_y/p2, t_z/p3
 		#X, Y, Z = linspace(x_min, x_max, p1), linspace(y_min, y_max, p2), linspace(z_min, z_max, p3)
 	## Negative: the spacing is given and the number of points is deduced
 	else:
-		## -1 is not implemented
-		s1, s2, s3 = (2.0**(2+p_npts)/3.0,)*3   if -5 < p_npts < -1 else \
-		             (-p_npts*1e-3/A_to_a0,)*3  if p_npts <= -5 else None
+		s1, s2, s3 = (1.0/(-par),)*3
 		p1, p2, p3 = int(t_x/s1) + 1, int(t_y/s2) + 1, int(t_z/s3) + 1
 		#X, Y, Z = arange(x_min, x_max, s1), arange(y_min, y_max, s2), arange(z_min, z_max, s3)
-	del p_npts
+	del par
 
 ## Didn't work - it's a keyword
 except ValueError:
