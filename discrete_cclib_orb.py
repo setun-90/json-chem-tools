@@ -26,20 +26,20 @@ over_s = 7   # to be tuned
 
 ## Try to treat size parameter as a number
 try:
-	p_npts = int(argv[2])
+	par = int(argv[2])
 	## Two regimes: positive or zero, and negative
 	## Positive or zero: the number of points is given and the spacing is deduced
-	if 0 < p_npts:
-		grid.N_ = [p_npts]*3
+	if 0 < par:
+		grid.N_ = [par]*3
 
-	elif p_npts == 0:
+	elif par == 0:
 		grid.N_ = [80]*3
 
 	## Negative: the spacing is given and the number of points is deduced
 	else:
-		grid.delta_ = [1.0(-p_npts)]*3
+		grid.delta_ = [1.0/(-par)]*3
 
-	del p_npts
+	del par
 
 ## Didn't work - parameter is a keyword
 except ValueError:
