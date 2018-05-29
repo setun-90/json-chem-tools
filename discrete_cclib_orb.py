@@ -46,15 +46,13 @@ except ValueError:
 	grid.delta_ = [1.0/3.0  if argv[2] == "Coarse" else \
 	               1.0/6.0  if argv[2] == "Medium" else \
 	               1.0/12.0 if argv[2] == "Fine" else None]*3
-## Apparently some log files produce `geo_spec`s that have only two dimensions
-## This allows us to catch this...
-#print len(qc.geo_spec)
 
-grid.max_ = map(lambda a: max(a) + over_s, qc.geo_spec)
-grid.min_ = map(lambda a: min(a) - over_s, qc.geo_spec)
-## ... in case this fails ...
+temp = map(list, zip(*qc.geo_spec))
+grid.max_ = map(lambda a: max(a) + over_s, temp)
+grid.min_ = map(lambda a: min(a) - over_s, temp)
+del temp
+
 grid.init()
-## ... because ORBKIT expects at least three entries
 
 
 
