@@ -125,20 +125,21 @@ if mayavi_yes:
 
 	if maya:
 		## Calculate best fitting plane
-		from numpy import cov, mean, linalg
-		from math import sqrt, atan2
-		eival, eivec = linalg.eig(cov((qc.geo_spec - mean(qc.geo_spec, axis=0)).T))
-		normal, point = eivec[:,-1], mean(qc.geo_spec, axis=0)
-		r_p = sqrt(normal[0]**2 + normal[1]**2)
-		r = sqrt(r_p**2 + normal[2]**2)
-		a, e = atan2(normal[0], normal[1]), atan2(r, r_p)
+		if len(qc.geo_spec) > 1:
+			from numpy import cov, mean, linalg
+			from math import sqrt, atan2
+			eival, eivec = linalg.eig(cov((qc.geo_spec - mean(qc.geo_spec, axis=0)).T))
+			normal, point = eivec[:,-1], mean(qc.geo_spec, axis=0)
+			r_p = sqrt(normal[0]**2 + normal[1]**2)
+			r = sqrt(r_p**2 + normal[2]**2)
+			a, e = atan2(normal[0], normal[1]), atan2(r, r_p)
+			mlab.view(azimuth=a, elevation=e)
 
 		mlab.figure(bgcolor=(1,1,1))
-		mlab.view(azimuth=a, elevation=e)
 		for i, series in enumerate(out):
 			src = mlab.pipeline.scalar_field(series)
-			mlab.pipeline.iso_surface(src, contours=[ 0.05, ], opacity=0.7, color=(0.4, 0, 0.235))
-			mlab.pipeline.iso_surface(src, contours=[-0.05, ], opacity=0.7, color=(0.95, 0.95, 0.95))
+			mlab.pipeline.iso_surface(src, contours=[ 0.05, ], opacity=1, color=(0.4, 0, 0.235))
+			mlab.pipeline.iso_surface(src, contours=[-0.05, ], opacity=1, color=(0.95, 0.95, 0.95))
 			
 			P_x, P_y, P_z = list(map(list, zip(*qc.geo_spec)))
 			mlab.points3d(P_x, P_y, P_z, color=(0,0,1), mode="sphere", scale_factor=1)
