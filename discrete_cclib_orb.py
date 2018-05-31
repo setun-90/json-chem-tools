@@ -47,18 +47,16 @@ except ValueError:
 	               1.0/6.0  if argv[2] == "Medium" else \
 	               1.0/12.0 if argv[2] == "Fine" else None]*3
 
-temp = map(list, zip(*qc.geo_spec))
-grid.max_ = map(lambda a: max(a) + over_s, temp)
-grid.min_ = map(lambda a: min(a) - over_s, temp)
-del temp
+grid.max_ = map(lambda a: max(a) + over_s, qc.geo_spec.T)
+grid.min_ = map(lambda a: min(a) - over_s, qc.geo_spec.T)
 
 grid.init()
 
 
 
 ## Get job type and parameters
-from orbkit import options
-options.numproc = 4
+#from orbkit import options
+#options.numproc = 4
 
 val = argv[1].split("=")
 job = val[0]
@@ -70,7 +68,7 @@ if job == "MO":
 	qc.mo_spec = read.mo_select(qc.mo_spec, mos)["mo_spec"]
 
 	def func(data):
-		return core.rho_compute(data, calc_mo=True)
+		return core.rho_compute(data, calc_mo=True, numproc=4,)
 
 elif job == "FDensity":
 	try:
@@ -126,6 +124,7 @@ if mayavi_yes:
 	if maya:
 		## Calculate best fitting plane
 		if len(qc.geo_spec) > 1:
+			## PCA
 			from numpy import cov, mean, linalg
 			from math import sqrt, atan2
 			eival, eivec = linalg.eig(cov((qc.geo_spec - mean(qc.geo_spec, axis=0)).T))
@@ -137,12 +136,13 @@ if mayavi_yes:
 
 		mlab.figure(bgcolor=(1,1,1))
 		for i, series in enumerate(out):
+			P_x, P_y, P_z = qc.geo_spec.T
+			mlab.points3d(P_x, P_y, P_z, color=(0,0,1), mode="sphere", scale_factor=1)
+
 			src = mlab.pipeline.scalar_field(series)
 			mlab.pipeline.iso_surface(src, contours=[ 0.05, ], opacity=1, color=(0.4, 0, 0.235))
 			mlab.pipeline.iso_surface(src, contours=[-0.05, ], opacity=1, color=(0.95, 0.95, 0.95))
 			
-			P_x, P_y, P_z = list(map(list, zip(*qc.geo_spec)))
-			mlab.points3d(P_x, P_y, P_z, color=(0,0,1), mode="sphere", scale_factor=1)
 			mlab.savefig("./{}-{}.png".format(argv[4], i))
 			mlab.clf()
 
