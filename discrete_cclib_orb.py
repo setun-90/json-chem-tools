@@ -66,8 +66,6 @@ if job == "MO":
 	## Get list of orbitals
 	mos = val[1].split(",")
 
-	qc.mo_spec = read.mo_select(qc.mo_spec, mos)["mo_spec"]
-
 	def func(data):
 		return core.rho_compute(data, calc_mo=True, numproc=4,)
 
@@ -80,7 +78,6 @@ elif job == "FDensity":
 		## (Useles for now, but keep it for later)
 		opt = "SCF"
 	mos = ["1:homo+1"]
-	qc.mo_spec = read.mo_select(qc.mo_spec, mos)["mo_spec"]	
 
 	def func(data):
 		return core.rho_compute(data, numproc=4)
@@ -91,6 +88,7 @@ elif job == "Potential":
 
 
 ## Main calculation
+qc.mo_spec = read.mo_select(qc.mo_spec, mos)["mo_spec"]
 out = func(qc)
 
 
@@ -123,64 +121,28 @@ if mayavi_yes:
 		print("import mayavi failed")
 
 	if maya:
-		## Calculate best fitting plane
 		if len(qc.geo_spec) > 1:
-			## PCA
+			## Calculate best fitting plane via PCA
 			from numpy import cov, mean, linalg
 			from math import sqrt, atan2
-			eival, eivec = linalg.eig(cov((qc.geo_spec - mean(qc.geo_spec, axis=0)).T))
-			normal, point = eivec[:,-1], mean(qc.geo_spec, axis=0)
+			normal = linalg.eig(cov((qc.geo_spec - mean(qc.geo_spec, axis=0)).T))[1][:,-1]
 			r_p = sqrt(normal[0]**2 + normal[1]**2)
 			r = sqrt(r_p**2 + normal[2]**2)
 			a, e = atan2(normal[0], normal[1]), atan2(r, r_p)
-			mlab.view(azimuth=a, elevation=e)
+			mlab.view(azimuth=a, elevation=e, distance=min(grid.max_))
 
 		mlab.figure(bgcolor=(1,1,1))
 		for i, series in enumerate(out):
 
-			mlab.contour3d(series, contours=[ 0.05 ], color=(0.4, 0, 0.235))
-			mlab.contour3d(series, contours=[-0.05 ], color=(0.95, 0.95, 0.95))
+			mlab.contour3d(x, y, z, series, contours=[ 0.05 ], color=(0.4, 0, 0.235))
+			mlab.contour3d(x, y, z, series, contours=[-0.05 ], color=(0.95, 0.95, 0.95))
 
-			from numpy import column_stack
-			mlab.points3d(*qc.geo_spec.T, color=(0,0,1))
-			
-			mlab.savefig("./{}-{}.png".format(argv[4], i))
+			from numpy import stack
+			mlab.points3d(*qc.geo_spec.T, extent=stack((grid.min_, grid.max_), axis=1).flatten(), color=(0,0,1))
+			for p, t in stack((qc.geo_spec, qc.geo_info), axis=1):
+				mlab.text3d(p[0], p[1], p[2], t[0], color=(0,0,0))
+
+			mlab.show()
+
+		#	mlab.savefig("./{}-{}.png".format(argv[4], i))
 			mlab.clf()
-
-else:
-	## Use matplotlib to show cuts of the molecular orbitals
-	import matplotlib.pyplot as plt
-	import numpy as np
-
-	## Select cuts
-	xd = out[0][grid.N_[0]/2-1,:,:]
-	yd = out[0][:,grid.N_[1]/2-1,:]
-	zd = out[0][:,:,grid.N_[2]/2-1]
-
-	## Plot cuts
-	f, (pic1, pic2, pic3) = plt.subplots(3, 1, sharex=True, sharey=True, figsize=(6,14))
-	pic1.contour(z, y, xd, 50, linewidths=0.5, colors='k')
-	pic1.contourf(z, y, xd, 50, cmap=plt.cm.rainbow, vmax=abs(xd).max(), vmin=-abs(xd).max())
-	pic1.set_xlabel('z')
-	pic1.set_ylabel('y')
-
-	pic2.contour(z, x, yd, 50, linewidths=0.5, colors='k')
-	pic2.contourf(z, x, yd, 50, cmap=plt.cm.rainbow, vmax=abs(yd).max(), vmin=-abs(yd).max())
-	pic2.set_xlabel('z')
-	pic2.set_ylabel('x')
-
-	pic3.contour(y, x, zd, 50, linewidths=0.5, colors='k')
-	pic3.contourf(y, x, zd, 50, cmap=plt.cm.rainbow, vmax=abs(zd).max(), vmin=-abs(zd).max())
-	pic3.set_xlabel('y')
-	pic3.set_ylabel('x')
-
-	## Following options applied for all subplots as they share x- and y-axis
-	pic1.xaxis.set_ticks(np.arange(-5,6,5))
-	pic1.yaxis.set_ticks(np.arange(-5,6,5))
-	pic1.set_aspect('equal')
-
-	## Plot
-	f.subplots_adjust(left=0.15,bottom=0.05,top=0.95,right=0.95)
-	f.show()
-
-	raw_input("Press Enter to continue")
