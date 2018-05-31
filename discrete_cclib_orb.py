@@ -12,6 +12,7 @@ if len(argv) < 4:
 
 from physics import A_to_a0
 from orbkit import grid, core, read, output, extras
+from numpy import amax, amin
 
 
 
@@ -47,8 +48,8 @@ except ValueError:
 	               1.0/6.0  if argv[2] == "Medium" else \
 	               1.0/12.0 if argv[2] == "Fine" else None]*3
 
-grid.max_ = map(lambda a: max(a) + over_s, qc.geo_spec.T)
-grid.min_ = map(lambda a: min(a) - over_s, qc.geo_spec.T)
+grid.max_ = list(amax(qc.geo_spec.T, axis=1) + over_s)
+grid.min_ = list(amin(qc.geo_spec.T, axis=1) - over_s)
 
 grid.init()
 
@@ -136,12 +137,12 @@ if mayavi_yes:
 
 		mlab.figure(bgcolor=(1,1,1))
 		for i, series in enumerate(out):
-			P_x, P_y, P_z = qc.geo_spec.T
-			mlab.points3d(P_x, P_y, P_z, color=(0,0,1), mode="sphere", scale_factor=1)
 
-			src = mlab.pipeline.scalar_field(series)
-			mlab.pipeline.iso_surface(src, contours=[ 0.05, ], opacity=1, color=(0.4, 0, 0.235))
-			mlab.pipeline.iso_surface(src, contours=[-0.05, ], opacity=1, color=(0.95, 0.95, 0.95))
+			mlab.contour3d(series, contours=[ 0.05 ], color=(0.4, 0, 0.235))
+			mlab.contour3d(series, contours=[-0.05 ], color=(0.95, 0.95, 0.95))
+
+			from numpy import column_stack
+			mlab.points3d(*qc.geo_spec.T, color=(0,0,1))
 			
 			mlab.savefig("./{}-{}.png".format(argv[4], i))
 			mlab.clf()
