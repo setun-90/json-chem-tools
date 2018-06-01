@@ -29,12 +29,12 @@ qc = read.convert_cclib(ccopen(argv[4]).parse(), all_mo=True)
 #over_s = 7
 
 ## Spacing
-grid.delta_ = [1.0/10.0]*3
+grid.delta_ = [1.0/6.0]*3
 
 #grid.max_ = list(amax(qc.geo_spec.T, axis=1) + over_s)
 #grid.min_ = list(amin(qc.geo_spec.T, axis=1) - over_s)
-grid.max_ = [ 20]*3
-grid.min_ = [-20]*3
+grid.max_ = [ 10]*3
+grid.min_ = [-10]*3
 
 grid.init()
 
@@ -114,20 +114,40 @@ elif argv[1] == "viz":
 		mlab.figure(bgcolor=(1,1,1))
 		for i, series in enumerate(out):
 
-			from numpy import stack, column_stack
-			extents = column_stack((grid.min_, grid.max_)).flatten()
-			mlab.contour3d(series, contours=[ 0.05 ], extent=extents, color=(0.4, 0, 0.235))
-			mlab.contour3d(series, contours=[-0.05 ], extent=extents, color=(0.95, 0.95, 0.95))
+			from numpy import mgrid
+			X, Y, Z = mgrid[grid.min_[0]:grid.max_[0]:1j*len(grid.x),
+			                grid.min_[1]:grid.max_[1]:1j*len(grid.y),
+			                grid.min_[2]:grid.max_[2]:1j*len(grid.z)]
 
-			from IPython import embed as shell
+			op = mlab.contour3d(X, Y, Z, series, contours=[ 0.05 ], color=(0.4, 0, 0.235))
+			op.actor.property.interpolation = "phong"
+			op.actor.property.specular = 0.1
+			op.actor.property.specular_power = 5
+			on = mlab.contour3d(X, Y, Z, series, contours=[-0.05 ], color=(0.95, 0.95, 0.95))
+			on.actor.property.interpolation = "phong"
+			on.actor.property.specular = 0.1
+			on.actor.property.specular_power = 5
 
-			mlab.points3d(*(qc.geo_spec.T/A_to_a0), color=(0,0,0), scale_factor=1)
-		#	for p, t in stack((qc.geo_spec, qc.geo_info), axis=1):
+
+			tab = []
+		#	mlab.points3d(*qc.geo_spec.T, color=(0,0,0), scale_factor=1)
+			with open("Atoms.csv", "r") as f:
+				f.next() # skip header line
+				tab = [line.split() for line in f]
+			tran = dict([(line[1], line[2:]) for line in tab])
+
+			from numpy import stack
+			for P, t in stack((qc.geo_spec, qc.geo_info), axis=1):
+				attr = tran[t[0]]
+				color = tuple(map(lambda x: float(x)/255.0, attr[1:4]))
+				scale_factor = float(attr[4])*0.4
+				mlab.points3d([float(P[0])], [float(P[1])], [float(P[2])], color=color, scale_factor=scale_factor, resolution=15)
 		#		mlab.text3d(p[0], p[1], p[2], t[0], color=(0,0,0))
 
 			mlab.show()
 
-			shell()
+			from IPython import embed as shell
+		#	shell()
 
 			mlab.savefig("./{}-{}.png".format(argv[4], i))
 			mlab.clf()
