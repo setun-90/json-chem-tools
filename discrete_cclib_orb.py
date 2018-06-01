@@ -23,33 +23,18 @@ qc = read.convert_cclib(ccopen(argv[4]).parse(), all_mo=True)
 
 
 ## Get grid parameters and initialize grid
-over_s = 7   # to be tuned
 
-## Try to treat size parameter as a number
-try:
-	par = int(argv[3])
-	## Two regimes: positive or zero, and negative
-	## Positive or zero: the number of points is given and the spacing is deduced
-	if 0 < par:
-		grid.N_ = [par]*3
+## Oversizing in Bohr units
+## ORBKIT uses 5 by default, tune this as required
+#over_s = 7
 
-	elif par == 0:
-		grid.N_ = [80]*3
-
-	## Negative: the spacing is given and the number of points is deduced
-	else:
-		grid.delta_ = [1.0/(-par)]*3
-
-	del par
-
-## Didn't work - parameter is a keyword
-except ValueError:
-	grid.delta_ = [1.0/3.0  if argv[3] == "Coarse" else \
-	               1.0/6.0  if argv[3] == "Medium" else \
-	               1.0/12.0 if argv[3] == "Fine" else None]*3
+## Spacing
+grid.delta_ = [1.0/10.0]*3
 
 #grid.max_ = list(amax(qc.geo_spec.T, axis=1) + over_s)
 #grid.min_ = list(amin(qc.geo_spec.T, axis=1) - over_s)
+grid.max_ = [ 20]*3
+grid.min_ = [-20]*3
 
 grid.init()
 
@@ -134,11 +119,15 @@ elif argv[1] == "viz":
 			mlab.contour3d(series, contours=[ 0.05 ], extent=extents, color=(0.4, 0, 0.235))
 			mlab.contour3d(series, contours=[-0.05 ], extent=extents, color=(0.95, 0.95, 0.95))
 
+			from IPython import embed as shell
+
 			mlab.points3d(*(qc.geo_spec.T/A_to_a0), color=(0,0,0), scale_factor=1)
 		#	for p, t in stack((qc.geo_spec, qc.geo_info), axis=1):
 		#		mlab.text3d(p[0], p[1], p[2], t[0], color=(0,0,0))
 
 			mlab.show()
+
+			shell()
 
 			mlab.savefig("./{}-{}.png".format(argv[4], i))
 			mlab.clf()
