@@ -26,15 +26,19 @@ qc = read.convert_cclib(ccopen(argv[4]).parse(), all_mo=True)
 
 ## Oversizing in Bohr units
 ## ORBKIT uses 5 by default, tune this as required
-#over_s = 7
+over_s = 7
 
-## Spacing
-grid.delta_ = [1.0/6.0]*3
+## Spacing/Number of points
+par = int(argv[3])
+if par > 0:
+	grid.N_ = [par]*3
+elif par == 0:
+	grid.N_ = [80]*3
+else:
+	grid.delta_ = [1.0/(-par)]*3
 
-#grid.max_ = list(amax(qc.geo_spec.T, axis=1) + over_s)
-#grid.min_ = list(amin(qc.geo_spec.T, axis=1) - over_s)
-grid.max_ = [ 10]*3
-grid.min_ = [-10]*3
+grid.max_ = amax(qc.geo_spec.T, axis=1) + over_s
+grid.min_ = amin(qc.geo_spec.T, axis=1) - over_s
 
 grid.init()
 
