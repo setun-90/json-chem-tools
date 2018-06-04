@@ -119,11 +119,13 @@ elif argv[1] == "viz":
 			                grid.min_[1]:grid.max_[1]:1j*len(grid.y),
 			                grid.min_[2]:grid.max_[2]:1j*len(grid.z)]
 
-			op = mlab.contour3d(X, Y, Z, series, contours=[ 0.05 ], color=(0.4, 0, 0.235))
+			data = mlab.pipeline.scalar_field(X, Y, Z, series)
+
+			op = mlab.pipeline.iso_surface(data, contours=[ 0.05 ], color=(0.4, 0, 0.235))
 			op.actor.property.interpolation = "phong"
 			op.actor.property.specular = 0.1
 			op.actor.property.specular_power = 5
-			on = mlab.contour3d(X, Y, Z, series, contours=[-0.05 ], color=(0.95, 0.95, 0.95))
+			on = mlab.pipeline.iso_surface(data, contours=[-0.05 ], color=(0.95, 0.95, 0.95))
 			on.actor.property.interpolation = "phong"
 			on.actor.property.specular = 0.1
 			on.actor.property.specular_power = 5
