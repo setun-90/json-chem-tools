@@ -7,24 +7,30 @@
 from sys import argv
 if len(argv) < 5:
 	from sys import stderr, exit
-	stderr.write("Usage: {} $action $job[=$value] $npts ${{input}}.log [${{output}}]\n".format(argv[0]))
+	stderr.write("Usage: {} $action $job[=$value] $npts ${{input}}.log ${{output}}\n".format(argv[0]))
 	exit(1)
 
 from physics import A_to_a0
-from orbkit import grid, core, read, output, extras
+from orbkit import grid, core, output, extras
+## Patched version of orbkit.read
+import read
 from numpy import amax, amin
 
 
 
 ## Input
-from cclib.parser import ccopen
-qc = read.convert_cclib(ccopen(argv[4]).parse(), all_mo=True)
+if ".json" in argv[4]:
+	from json import load
+	qc = read.convert_json(load(open("fchk_log_files/cid241/OPT.json", "r")), all_mo=True)
+else:
+	from cclib.parser import ccopen
+	qc = read.convert_cclib(ccopen(argv[4]).parse(), all_mo=True)
 
 
 
 ## Get grid parameters and initialize grid
 
-## Oversizing in Bohr units
+## Oversizing in Bohr radii
 ## ORBKIT uses 5 by default, tune this as required
 over_s = 7
 
@@ -83,11 +89,12 @@ out = func(qc)
 if argv[1] == "save":
 	## Save to file
 	try:
-		output.main_output(out, qc.geo_info, qc.geo_spec, outputname=argv[4], otype="cb")
+		for i, series in enumerate(out):
+			output.main_output(series, qc.geo_info, qc.geo_spec, outputname="{}-{}".format(argv[5], i), otype="cb")
 
 	except IndexError:
 		from sys import stderr, exit
-		stderr.write("No filename specified.\n")
+		stderr.write("No output filename specified.\n")
 		exit(1)
 
 elif argv[1] == "viz":
@@ -96,15 +103,16 @@ elif argv[1] == "viz":
 	try:
 		from enthought.mayavi import mlab
 		maya = True
-	except Exception:
+	except ImportError as E:
 		print("import enthought.mayavi failed -- trying mayavi")
 	try:
 		from mayavi import mlab
 		maya = True
-	except Exception:
+	except ImportError:
 		print("import mayavi failed")
 
 	if maya:
+		mlab.figure(bgcolor=(1,1,1))
 		if len(qc.geo_spec) > 1:
 			## Calculate best fitting plane via PCA
 			from numpy import cov, mean, linalg
@@ -115,7 +123,6 @@ elif argv[1] == "viz":
 			a, e = atan2(normal[0], normal[1]), atan2(r, r_p)
 			mlab.view(azimuth=a, elevation=e, distance=min(grid.max_))
 
-		mlab.figure(bgcolor=(1,1,1))
 		for i, series in enumerate(out):
 
 			from numpy import mgrid
@@ -155,5 +162,5 @@ elif argv[1] == "viz":
 			from IPython import embed as shell
 		#	shell()
 
-			mlab.savefig("./{}-{}.png".format(argv[4], i))
+			mlab.savefig("./{}-{}.png".format(argv[5], i))
 			mlab.clf()
