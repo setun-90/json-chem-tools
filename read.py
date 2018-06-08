@@ -2224,7 +2224,8 @@ def convert_json(jData, all_mo=False, spin=None):
     orb_sym = ['alpha','beta']
 
   import scipy.sparse
-  mocoeffs = scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in jData['results']["wavefunction"]["MO_coefs"][0]])).todense()
+  mocoeffs = [numpy.asarray(scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in jData['results']["wavefunction"]["MO_coefs"][0]]),
+              shape=(jData['results']['wavefunction']['MO_number_kept'], jData['comp_details']['general']['basis_set_size'])).todense())]
   nmo = jData['results']['wavefunction']['MO_number'] if "nmo" in jData['results']['wavefunction'] else len(mocoeffs[0])
   for ii in range(nmo):
     for i,j in enumerate(add):
@@ -2244,7 +2245,7 @@ def convert_json(jData, all_mo=False, spin=None):
         ue -= 1.0
       else:
         occ_num = 0.0
-      qc.mo_spec.append({'coeffs': mocoeffs[i][ii].T[0,:],
+      qc.mo_spec.append({'coeffs': mocoeffs[i][ii],
               'energy': jData['results']['wavefunction']['MO_energies'][i][ii],
               'occ_num': occ_num,
               'sym': '%d.%s' %(sym[a],a)
