@@ -2306,7 +2306,7 @@ def convert_cclib(ccData, all_mo=False, spin=None):
   qc = QCinfo()
   
   # Converting all information concerning atoms and geometry
-  qc.geo_spec = ccData.atomcoords[0] * aa_to_au
+  qc.geo_spec = ccData.atomcoords[-1] * aa_to_au
   for ii in range(ccData.natom):
     symbol = get_atom_symbol(atom=ccData.atomnos[ii])
     qc.geo_info.append([symbol,str(ii+1),str(ccData.atomnos[ii])])

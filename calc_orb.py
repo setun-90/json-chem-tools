@@ -3,6 +3,8 @@
 
 
 
+## Function
+
 from physics import A_to_a0
 from orbkit import grid, core
 ## Patched version of orbkit.read
@@ -12,7 +14,21 @@ import numpy as np
 
 
 ## Get grid parameters and initialize grid
-def init_ORB_grid(data, grid_par=-6, over_s=7):
+def _init_ORB_grid(data, grid_par=-6, over_s=7):
+	"""Initializes ORBKIT's grid and returns necessary data for visualization.
+	**Parameters:**
+
+	  data : dict
+	An instance of ORBKIT's QC class.
+	  grid_par : int
+	Parameter controlling grid. If positive or zero, specifies number of points; else specifies the resolution in atomic units.
+	  over_s : int|float
+	Oversizing, to be tuned
+
+	**Returns**
+	  out
+	List of numpy.ndarrays of the same shape as X
+	"""
 
 	## Spacing/Number of points
 	if grid_par > 0:
@@ -22,8 +38,8 @@ def init_ORB_grid(data, grid_par=-6, over_s=7):
 	else:
 		grid.delta_ = [1.0/(-grid_par)]*3
 
-	grid.max_ = np.amax(data.geo_spec.T, axis=1) + over_s
-	grid.min_ = np.amin(data.geo_spec.T, axis=1) - over_s
+	grid.max_ = np.amax(data.geo_spec, axis=0) + over_s
+	grid.min_ = np.amin(data.geo_spec, axis=0) - over_s
 
 	grid.init()
 
@@ -36,7 +52,7 @@ def init_ORB_grid(data, grid_par=-6, over_s=7):
 ## Calculations
 def MO(j_data, MO_list, grid_par=-6):
 	qc = read.convert_json(j_data, all_mo=True)
-	X, Y, Z = init_ORB_grid(qc, grid_par=grid_par)
+	X, Y, Z = _init_ORB_grid(qc, grid_par=grid_par)
 
 	## Get list of orbitals
 	qc.mo_spec = read.mo_select(qc.mo_spec, MO_list)["mo_spec"]
@@ -48,9 +64,7 @@ def MO(j_data, MO_list, grid_par=-6):
 
 
 
-def EDD(j_data, T_data, T_list, grid_par=-6):
-	transitions = T_data["results"]["excited_states"]["et_transitions"]
-
+def EDD(j_data, transitions, grid_par=-6):
 	## To save time, the calculation is done in two phases:
 
 	## 1. Get all MOs involved in transitions and calculate them once
@@ -62,8 +76,9 @@ def EDD(j_data, T_data, T_list, grid_par=-6):
 	## in qc.mo_spec)
 	tab = dict([(MO, i) for i, MO in enumerate(MO_set)])
 
+	qc = read.convert_json(j_data, all_mo=True)
 	qc.mo_spec = read.mo_select(qc.mo_spec, [str(MO + 1) for MO in MO_set])["mo_spec"]
-	X, Y, Z = init_ORB_grid(qc, grid_par=grid_par)
+	X, Y, Z = _init_ORB_grid(qc, grid_par=grid_par)
 	MOs = core.rho_compute(qc, calc_mo=True, numproc=4)
 
 	## 2. Combine MOs according to info in `et_transitions`

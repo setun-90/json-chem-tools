@@ -26,7 +26,7 @@ with open("Atoms.csv", "r") as f:
 
 def scene_init(j_data):
 	figure = mlab.figure(bgcolor=(1,1,1))
-	geom = np.array(j_data["molecule"]["starting_geometry"])
+	geom = np.array(j_data["results"]["geometry"]["elements_3D_coords_converged"]).reshape((-1,3))/A_to_a0
 
 	if len(geom) > 1:
 		## Eliminate hydrogens
@@ -92,7 +92,7 @@ def topo(j_data, file_name=None):
 
 	if file_name is not None:
 		e = mlab.view()[1]
-		mlab.savefig("{}-TOPO.png".format(file_name))
+		mlab.savefig("{}-TOPO.png".format(file_name), figure=figure)
 	#	for i in range(10):
 	#		mlab.view(elevation=e-i)
 	#		mlab.savefig("{}-TOPO-{}.png".format(file_name, i))
@@ -130,7 +130,7 @@ def viz_EDD(data, X, Y, Z, j_data, file_name=None):
 		if file_name is not None:
 			mlab.savefig("./{}-EDD-{}.png".format(file_name, i))
 
-		figure.remove_child(Dp)
-		figure.remove_child(Dn)
+		Dp.remove()
+		Dn.remove()
 
 	return figure

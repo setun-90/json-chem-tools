@@ -67,11 +67,6 @@ elif job == "MO":
 	viz_MO(out, X, Y, Z, data, file_name=argv[5])
 
 elif job == "EDD":
-	try:
-		T_list = val[1].split(",")
-	except IndexError:
-		T_list = ["*"]
-
 	if ".json" not in argv[5]:
 		from sys import stderr, exit
 		stderr.write(usage)
@@ -80,5 +75,12 @@ elif job == "EDD":
 	with open(argv[5], "r") as f:
 		TD_data = load(f)
 
-	out, X, Y, Z = EDD(data, TD_data, None, grid_par=par)
+	try:
+		T_list = map(int, val[1].split(","))
+	except IndexError:
+		pass
+
+	transitions = [TD_data["results"]["excited_states"]["et_transitions"][i] for i in T_list]
+
+	out, X, Y, Z = EDD(data, transitions, grid_par=par)
 	viz_EDD(out, X, Y, Z, data, file_name=argv[6])
