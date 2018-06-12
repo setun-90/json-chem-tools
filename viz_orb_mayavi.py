@@ -26,6 +26,7 @@ with open("Atoms.csv", "r") as f:
 
 def scene_init(j_data):
 	figure = mlab.figure(bgcolor=(1,1,1))
+	figure.scene.disable_render= True
 	geom = np.array(j_data["results"]["geometry"]["elements_3D_coords_converged"]).reshape((-1,3))/A_to_a0
 
 	if len(geom) > 1:
@@ -40,7 +41,7 @@ def scene_init(j_data):
 		print eivec
 		normal = eivec[:,0]
 		## Grab point from best fitting plane (NOT the view) to use as focal point
-		point = np.mean(geom, axis=0)
+		#point = np.mean(geom, axis=0)
 
 		from math import sqrt, atan2
 		## Calculate hypotenuse on x-y plane
@@ -50,8 +51,8 @@ def scene_init(j_data):
 		## Calculate azimuth a and elevation e
 		## Python and Numpy use radians, but MayaVi uses degrees
 		a, e = np.rad2deg(atan2(normal[0], normal[1])), np.rad2deg(atan2(r, hxy))
-		mlab.view(azimuth=a, elevation=e-70, figure=figure, focalpoint=point)
-		print a, e, point
+		mlab.view(azimuth=a, elevation=e+70, figure=figure)
+		print a, e
 
 		## DEBUG: show normal and view vectors
 		#mlab.quiver3d(point[0], point[1], point[2], normal[0], normal[1], normal[2])
@@ -66,7 +67,8 @@ def scene_init(j_data):
 		p, color = geom[i], tuple(float(x)/255.0 for x in tab[atom][3:6])
 
 		## Requires >=MayaVi-4.6.0
-		mlab.points3d([p[0]], [p[1]], [p[2]], figure=figure, mode='sphere', color=color, resolution=15, scale_factor=0.3)
+		mlab.points3d([p[0]], [p[1]], [p[2]],
+		              figure=figure, mode='sphere', color=color, resolution=15, scale_factor=0.5)
 
 	for pair in conn:
 		att1 = tab[atom_nums[pair[0]]]
@@ -77,6 +79,8 @@ def scene_init(j_data):
 		              [p2[0] - p1[0]], [p2[1] - p1[1]], [p2[2] - p1[2]],
 		              figure=figure, mode='cylinder', color=color, resolution=15, scale_factor=0.5)
 
+	#mlab.axes(figure=figure)
+
 	return figure
 
 
@@ -84,21 +88,19 @@ def scene_init(j_data):
 ## Visualize
 def topo(j_data, file_name=None):
 	figure = scene_init(j_data)
+	geom = np.array(j_data["results"]["geometry"]["elements_3D_coords_converged"]).reshape((-1,3))/A_to_a0
 	## Show labels and numbers ( = indices + 1 )
-	#for i, atom in enumerate(j_data["molecule"]["atoms_Z"]):
-	#	p, label = j_data["molecule"]["starting_geometry"][i], tab[atom][1]
-	#	print p
-	#	mlab.text3d(p[0], p[1], p[2], label, color=(0,0,0), figure=figure)
+	for i, atom in enumerate(j_data["molecule"]["atoms_Z"]):
+		P, label = geom[i], tab[atom][1]
+		print P
+		mlab.text3d(P[0], P[1], P[2], label + str(i + 1), color=(0,0,0), scale=0.5, figure=figure)
 
 	if file_name is not None:
-		e = mlab.view()[1]
-		mlab.savefig("{}-TOPO.png".format(file_name), figure=figure)
-	#	for i in range(10):
-	#		mlab.view(elevation=e-i)
-	#		mlab.savefig("{}-TOPO-{}.png".format(file_name, i))
+		mlab.savefig("{}-TOPO.png".format(file_name), figure=figure, size=(600,600))
+
 	return figure
 
-def viz_MO(data, X, Y, Z, j_data, file_name=None):
+def viz_MO(data, X, Y, Z, j_data, file_name=None, labels=None):
 	figure = scene_init(j_data)
 	for i, series in enumerate(data):
 
@@ -107,17 +109,15 @@ def viz_MO(data, X, Y, Z, j_data, file_name=None):
 		MOp = mlab.pipeline.iso_surface(MO_data, figure=figure, contours=[ 0.05 ], color=(0.4, 0, 0.235))
 		MOn = mlab.pipeline.iso_surface(MO_data, figure=figure, contours=[-0.05 ], color=(0.95, 0.90, 0.93))
 
-		try:
-			mlab.savefig("./{}-MO-{}.png".format(file_name, i))
-		except:
-			pass
+		if file_name is not None:
+			mlab.savefig("./{}-MO-{}.png".format(file_name, labels[i] if labels is not None else i), figure=figure, size=(600,600))
 
 		MOp.remove()
 		MOn.remove()
 
 	return figure
 
-def viz_EDD(data, X, Y, Z, j_data, file_name=None):
+def viz_EDD(data, X, Y, Z, j_data, file_name=None, labels=None):
 	figure = scene_init(j_data)
 	for i, series in enumerate(data):
 		D_data = mlab.pipeline.scalar_field(X, Y, Z, series, figure=figure)
@@ -128,7 +128,7 @@ def viz_EDD(data, X, Y, Z, j_data, file_name=None):
 		#Dn.actor.property.line_width = 0.5
 
 		if file_name is not None:
-			mlab.savefig("./{}-EDD-{}.png".format(file_name, i))
+			mlab.savefig("./{}-EDD-{}.png".format(file_name, labels[i] if labels is not None else i), figure=figure, size=(600,600))
 
 		Dp.remove()
 		Dn.remove()

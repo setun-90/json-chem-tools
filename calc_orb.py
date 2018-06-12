@@ -26,8 +26,9 @@ def _init_ORB_grid(data, grid_par=-6, over_s=7):
 	Oversizing, to be tuned
 
 	**Returns**
+	  X, Y, Z 
 	  out
-	List of numpy.ndarrays of the same shape as X
+	List of numpy.ndarrays of the same shape as X, Y, Z
 	"""
 
 	## Spacing/Number of points
