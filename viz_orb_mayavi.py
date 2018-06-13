@@ -24,7 +24,7 @@ except ImportError as E:
 with open("Atoms.csv", "r") as f:
 	tab = [line.split() for line in f]
 
-def scene_init(j_data):
+def _scene_init(j_data, angle=70):
 	figure = mlab.figure(bgcolor=(1,1,1))
 	figure.scene.disable_render= True
 	geom = np.array(j_data["results"]["geometry"]["elements_3D_coords_converged"]).reshape((-1,3))/A_to_a0
@@ -43,16 +43,15 @@ def scene_init(j_data):
 		## Grab point from best fitting plane (NOT the view) to use as focal point
 		#point = np.mean(geom, axis=0)
 
-		from math import sqrt, atan2
-		## Calculate hypotenuse on x-y plane
-		hxy = sqrt(normal[0]**2 + normal[1]**2)
+		from math import sqrt, acos, atan2
 		## Calculate viewing distance r
-		r = sqrt(hxy**2 + normal[2]**2)
+		r = sqrt(normal[0]**2 + normal[1]**2 + normal[2]**2)
 		## Calculate azimuth a and elevation e
 		## Python and Numpy use radians, but MayaVi uses degrees
-		a, e = np.rad2deg(atan2(normal[0], normal[1])), np.rad2deg(atan2(r, hxy))
-		mlab.view(azimuth=a, elevation=e+70, figure=figure)
+		a, e = np.rad2deg(atan2(normal[1], normal[0])), np.rad2deg(acos(normal[2]/r))
+		mlab.view(azimuth=a, elevation=e+angle, figure=figure)
 		print a, e
+		print mlab.view()
 
 		## DEBUG: show normal and view vectors
 		#mlab.quiver3d(point[0], point[1], point[2], normal[0], normal[1], normal[2])
@@ -81,19 +80,29 @@ def scene_init(j_data):
 
 	#mlab.axes(figure=figure)
 
-	return figure
+	return figure, normal
 
 
 
 ## Visualize
 def topo(j_data, file_name=None):
-	figure = scene_init(j_data)
+	"""
+	** Parameters **
+	  j_data : dict
+	Data on the molecule, as deserialized from the scanlog format.
+	  file_name : str, optional
+	Base name of the file in which to save the image.
+	** Returns **
+	  figure
+	The MayaVi scene containing the visualization.
+	"""
+	figure, normal = _scene_init(j_data)
 	geom = np.array(j_data["results"]["geometry"]["elements_3D_coords_converged"]).reshape((-1,3))/A_to_a0
 	## Show labels and numbers ( = indices + 1 )
 	for i, atom in enumerate(j_data["molecule"]["atoms_Z"]):
 		P, label = geom[i], tab[atom][1]
 		print P
-		mlab.text3d(P[0], P[1], P[2], label + str(i + 1), color=(0,0,0), scale=0.5, figure=figure)
+		mlab.text3d(P[0] - normal[0], P[1] - normal[1], P[2] - normal[2], label + str(i + 1), color=(0,0,0), scale=0.5, figure=figure)
 
 	if file_name is not None:
 		mlab.savefig("{}-TOPO.png".format(file_name), figure=figure, size=(600,600))
@@ -101,7 +110,14 @@ def topo(j_data, file_name=None):
 	return figure
 
 def viz_MO(data, X, Y, Z, j_data, file_name=None, labels=None):
-	figure = scene_init(j_data)
+	"""
+	** Parameters **
+	** Returns **
+	  figure
+	The MayaVi scene containing the visualization.
+	"""
+
+	figure = _scene_init(j_data)[0]
 	for i, series in enumerate(data):
 
 		MO_data = mlab.pipeline.scalar_field(X, Y, Z, series, figure=figure)
@@ -118,7 +134,14 @@ def viz_MO(data, X, Y, Z, j_data, file_name=None, labels=None):
 	return figure
 
 def viz_EDD(data, X, Y, Z, j_data, file_name=None, labels=None):
-	figure = scene_init(j_data)
+	"""
+	** Parameters **
+	** Returns **
+	  figure
+	The MayaVi scene containing the visualization.
+	"""
+
+	figure = _scene_init(j_data)[0]
 	for i, series in enumerate(data):
 		D_data = mlab.pipeline.scalar_field(X, Y, Z, series, figure=figure)
 
