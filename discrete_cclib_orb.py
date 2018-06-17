@@ -77,10 +77,18 @@ elif job == "EDD":
 
 	try:
 		T_list = map(int, val[1].split(","))
+		transitions = [TD_data["results"]["excited_states"]["et_transitions"][i] for i in T_list]
 	except IndexError:
-		pass
+		transitions = TD_data["results"]["excited_states"]["et_transitions"]
 
-	transitions = [TD_data["results"]["excited_states"]["et_transitions"][i] for i in T_list]
 
 	out, X, Y, Z = EDD(data, transitions, grid_par=par)
+
+	for series in out:
+		plus, minus = (series + np.abs(series))/2, (series - np.abs(series))/2
+		Sp, Sm = np.sum(plus), np.sum(minus)
+		print np.sum(plus*X)/Sp, np.sum(plus*Y)/Sp, np.sum(plus*Z)/Sp
+		print np.sum(minus*X)/Sm, np.sum(minus*Y)/Sm, np.sum(minus*Z)/Sm
+
+	#print X, Y, Z
 	viz_EDD(out, X, Y, Z, data, file_name=argv[6])

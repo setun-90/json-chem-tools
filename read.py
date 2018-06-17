@@ -2235,7 +2235,7 @@ def convert_json(jData, all_mo=False, spin=None):
       #if is_natorb:
       #  occ_num = ccData.nooccnos[ii]
       if not restricted:
-        occ_num = 1.0 if ii <= ccData.homos[i] else 0.0
+        occ_num = 1.0 if ii <= jData['results']['wavefunction']['homo_indexes'][i] else 0.0
       elif ele_num > ue:
         occ_num = 2.0
         ele_num -= 2.0

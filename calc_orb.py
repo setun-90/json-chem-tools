@@ -3,7 +3,7 @@
 
 
 
-## Function
+## Functions for calculating molecular orbitals and electron density differences.
 
 from physics import A_to_a0
 from orbkit import grid, core
@@ -56,7 +56,7 @@ def MO(j_data, MO_list, grid_par=-6):
 	** Parameters **
 	  j_data : dict
 	Data on the molecule, deserialized from the scanlog format.
-	  MO_list : list
+	  MO_list : list(str) or list(int)
 	A list containing either:
 	  - integers designating the molecular orbitals (starting from 1)
 	  - strings designating the molecular orbitals either through:
@@ -94,7 +94,7 @@ def EDD(j_data, transitions, grid_par=-6):
 	** Parameters **
 	  j_data : dict
 	Data on the molecule, as deserialized from the scanlog format.
-	 transitions : list
+	  transitions : list
 	A list of integers designating the transitions to consider (starting from 0)
 	  grid_par : int, optional
 	Governs the grid to be used for the voxels.
