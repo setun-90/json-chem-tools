@@ -40,8 +40,6 @@ def _scene_init(j_data):
 		eival, eivec = np.linalg.eig(np.cov((mod_geom - np.mean(mod_geom, axis=0)).T))
 		sort = eival.argsort()
 		eival, eivec = eival[sort], eivec[:,sort]
-		print eival
-		print eivec
 		normal = eivec[:,0]
 		## Grab point from best fitting plane (NOT the view) to use as focal point
 		#point = np.mean(geom, axis=0)
@@ -53,10 +51,10 @@ def _scene_init(j_data):
 		## Python and Numpy use radians, but MayaVi uses degrees
 		a, e = np.rad2deg(atan2(normal[1], normal[0])), np.rad2deg(acos(normal[2]/r))
 		mlab.view(azimuth=a, elevation=e+angle, figure=figure)
-		print a, e
-		print mlab.view()
 
 		## DEBUG: show normal and view vectors
+		#print a, e
+		#print mlab.view()
 		#mlab.quiver3d(point[0], point[1], point[2], normal[0], normal[1], normal[2])
 		#mlab.quiver3d([0]*3, [0]*3, [0]*3, [1,0,0], [0,1,0], [0,0,1], color=(0,0,0))
 		#mlab.quiver3d(*np.concatenate((np.zeros((3,2)), eivec[1:])), color=(0,0,1))
@@ -105,12 +103,13 @@ def topo(j_data, file_name=None, size=(600,600)):
 	  figure
 	The MayaVi scene containing the visualization.
 	"""
+
 	figure, normal = _scene_init(j_data)
 	geom = np.array(j_data["results"]["geometry"]["elements_3D_coords_converged"]).reshape((-1,3))/A_to_a0
+
 	## Show labels and numbers ( = indices + 1 )
 	for i, atom in enumerate(j_data["molecule"]["atoms_Z"]):
 		P, label = geom[i], tab[atom][1]
-		print P
 		mlab.text3d(P[0] - normal[0], P[1] - normal[1], P[2] - normal[2], label + str(i + 1), color=(0,0,0), scale=0.5, figure=figure)
 
 	if file_name is not None:
@@ -188,5 +187,37 @@ def viz_EDD(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 
 		Dp.remove()
 		Dn.remove()
+
+	return figure
+
+def viz_BARY(data, j_data, file_name=None, labels=None, size=(600,600)):
+	"""Visualizes the barycenters of the electron density difference (for visualizing dipole moments).
+	** Parameters **
+	  data : tuple(numpy.ndarray((3,N)), numpy.ndarray((3,N)))
+	Pair of column-major matrices containing the coordinates of the positive and negative barycenters, in that order.
+	  j_data : dict
+	Data on the molecule, as deserialized from the scanlog format.
+	  file_name : str, optional
+	Base name of the files in which to save the images.
+	  labels : list(str), optional
+	Labels to append to `file_name`. If None, the index of the series is appended.
+	  size : tuple(int, int), optional
+	The size of the image to save.
+	** Returns **
+	  figure
+	The MayaVi scene containing the visualization.
+	"""
+
+	figure = _scene_init(j_data)[0]
+
+	for i, D in enumerate(data):
+		Pp = mlab.points3d(D[0][0], D[0][1], D[0][2], figure=figure, color=(0.0, 0.5, 0.5))
+		Pm = mlab.points3d(D[1][0], D[1][1], D[1][2], figure=figure, color=(0.95, 0.95, 0.95))
+
+		if file_name is not None:
+			mlab.savefig("./{}-BARY-{}.png".format(file_name, labels[i] if labels is not None else i), figure=figure, size=size)
+
+		Pp.remove()
+		Pm.remove()
 
 	return figure

@@ -13,9 +13,14 @@ import numpy as np
 
 
 ## Usage
-usage = ( "Usage: {0} $action MO[=$value]  $npts ${{input}}.(log|json) ${{output}}\n"
-        + "     | {0} $action EDD[=$value] $npts ${{OPT-input}}.json   ${{TD-input}}.json ${{output}}\n"
-	+ "     | {0} $action topo         $npts ${{input}}.json ${{output}}\n").format(argv[0])
+usage = ( "Usage: {0} $action MO[=$value]                  $npts ${{input}}.json                      ${{output}}\n"
+        + "     | {0} $action (TD|EDD|BARY|Tozer)[=$value] $npts ${{OPT-input}}.json ${{TD-input}}.json ${{output}}\n"
+	+ "     | {0} $action topo                         $npts ${{input}}.json                      ${{output}}\n").format(argv[0])
+
+if len(argv) < 5:
+	from sys import stderr, exit
+	stderr.write(usage)
+	exit(0)
 
 
 
@@ -57,16 +62,30 @@ job = val[0]
 
 ## Calculate
 if job == "topo":
-	topo(data, argv[5])
+	try:
+		file_name=argv[5]
+	except IndexError:
+		file_name=None
+
+	topo(data, file_name)
 
 elif job == "MO":
 	## Get list of orbitals
 	MO_list = val[1].split(",")
 
 	out, X, Y, Z = MO(data, MO_list, grid_par=par)
-	viz_MO(out, X, Y, Z, data, file_name=argv[5])
+	for series in out:
+		## The length product works because all voxels of the ORBKIT grid have the same dimensions
+		print np.sum(np.square(series))*(X[1,0,0] - X[0,0,0])*(Y[0,1,0] - Y[0,0,0])*(Z[0,0,1] - Z[0,0,0])
 
-elif job == "EDD":
+	try:
+		file_name=argv[5]
+	except IndexError:
+		file_name=None
+
+	viz_MO(out, X, Y, Z, data, file_name=file_name)
+
+elif job in {"TD", "EDD", "BARY", "Tozer"}:
 	if ".json" not in argv[5]:
 		from sys import stderr, exit
 		stderr.write(usage)
@@ -82,13 +101,25 @@ elif job == "EDD":
 		transitions = TD_data["results"]["excited_states"]["et_transitions"]
 
 
-	out, X, Y, Z = EDD(data, transitions, grid_par=par)
+	try:
+		file_name=argv[6]
+	except IndexError:
+		file_name=None
 
-	for series in out:
-		plus, minus = (series + np.abs(series))/2, (series - np.abs(series))/2
-		Sp, Sm = np.sum(plus), np.sum(minus)
-		print np.sum(plus*X)/Sp, np.sum(plus*Y)/Sp, np.sum(plus*Z)/Sp
-		print np.sum(minus*X)/Sm, np.sum(minus*Y)/Sm, np.sum(minus*Z)/Sm
+	out, X, Y, Z = TD(data, transitions, grid_par=par)
 
-	#print X, Y, Z
-	viz_EDD(out, X, Y, Z, data, file_name=argv[6])
+	if job == "TD":
+		for l in [(e[1], e[2][:3]) for e in out]:
+			print l
+
+	elif job == "EDD":
+		viz_EDD([e[0] for e in out], X, Y, Z, data, file_name=file_name)
+
+	elif job == "BARY":
+		B = [e[2][3:] for e in out]
+		for P in B:
+			print P
+		viz_BARY(B, data, file_name=file_name)
+
+	elif job == "Tozer":
+		print [e[1] for e in out]
