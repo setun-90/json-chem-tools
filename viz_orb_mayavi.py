@@ -211,13 +211,18 @@ def viz_BARY(data, j_data, file_name=None, labels=None, size=(600,600)):
 	figure = _scene_init(j_data)[0]
 
 	for i, D in enumerate(data):
-		Pp = mlab.points3d(D[0][0], D[0][1], D[0][2], figure=figure, color=(0.0, 0.5, 0.5))
-		Pm = mlab.points3d(D[1][0], D[1][1], D[1][2], figure=figure, color=(0.95, 0.95, 0.95))
+		#Pp = mlab.points3d(D[0][0], D[0][1], D[0][2], figure=figure, mode='axes', scale_factor=0.3, color=(0.0, 0.5, 0.5))
+		#Pm = mlab.points3d(D[1][0], D[1][1], D[1][2], figure=figure, mode='axes', scale_factor=0.3, color=(0.95, 0.95, 0.95))
+
+		## Chemistry convention (from negative to positive)
+		Mu = mlab.quiver3d(D[1][0], D[1][1], D[1][2], D[0][0] - D[1][0], D[0][1] - D[1][1], D[0][2] - D[1][2], figure=figure, mode='arrow', scale_factor=1.0, color=(0.0, 0.5, 0.5))
 
 		if file_name is not None:
 			mlab.savefig("./{}-BARY-{}.png".format(file_name, labels[i] if labels is not None else i), figure=figure, size=size)
 
-		Pp.remove()
-		Pm.remove()
+		#Pp.remove()
+		#Pm.remove()
+
+		Mu.remove()
 
 	return figure
