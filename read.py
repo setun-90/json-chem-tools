@@ -2215,17 +2215,20 @@ def convert_json(jData, all_mo=False, spin=None):
     else:
       display('Converting only molecular orbitals of spin %s.' % spin)
   
+  import scipy.sparse
   sym = {}
+  shape = (jData['results']['wavefunction']['MO_number_kept'], jData['comp_details']['general']['basis_set_size'])
+  print shape
   if restricted:
     add = ['']
     orb_sym = [None]
+    mocoeffs = [numpy.asarray(scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in jData['results']["wavefunction"]["MO_coefs"][0]]), shape=shape).todense())]
   else:
     add = ['_a','_b']      
     orb_sym = ['alpha','beta']
+    mocoeffs = [numpy.asarray(scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in jData['results']["wavefunction"]["MO_coefs"][0]]), shape=shape).todense()),
+                numpy.asarray(scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in jData['results']["wavefunction"]["MO_coefs"][1]]), shape=shape).todense())]
 
-  import scipy.sparse
-  mocoeffs = [numpy.asarray(scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in jData['results']["wavefunction"]["MO_coefs"][0]]),
-              shape=(jData['results']['wavefunction']['MO_number_kept'], jData['comp_details']['general']['basis_set_size'])).todense())]
   nmo = jData['results']['wavefunction']['MO_number'] if "nmo" in jData['results']['wavefunction'] else len(mocoeffs[0])
   for ii in range(nmo):
     for i,j in enumerate(add):
