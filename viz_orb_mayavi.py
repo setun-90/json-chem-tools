@@ -8,7 +8,7 @@ import numpy as np
 
 try:
 	from enthought.mayavi import mlab
-except ImportError as E:
+except ImportError:
 	from sys import stderr
 	stderr.write("import enthought.mayavi failed -- trying mayavi\n")
 	try:
@@ -224,5 +224,19 @@ def viz_BARY(data, j_data, file_name=None, labels=None, size=(600,600)):
 		#Pm.remove()
 
 		Mu.remove()
+
+	return figure
+
+def viz_Potential(data, X, Y, Z, j_data, file_name=None, size=(600,600)):
+	u"""
+	"""
+
+	figure = _scene_init(j_data)[0]
+
+	src = mlab.pipeline.scalar_field(X, Y, Z, data, figure=figure)
+	mlab.pipeline.iso_surface(src, figure=figure, contours=[ 0.03 ], color=(0.0, 0.5, 0.5))
+	mlab.pipeline.iso_surface(src, figure=figure, contours=[-0.03 ], color=(0.95, 0.95, 0.95))
+
+	mlab.show()
 
 	return figure

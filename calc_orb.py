@@ -6,7 +6,7 @@
 ## Functions for calculating molecular orbitals and electron density differences.
 
 from physics import A_to_a0, ea0_to_D, pm_to_a0
-from orbkit import grid, core
+from orbkit import core
 ## Patched version of orbkit.read
 import read
 import numpy as np
@@ -19,7 +19,7 @@ def _init_ORB_grid(data, grid_par=-6, over_s=7):
 	**Parameters:**
 
 	  data : dict
-	An instance of ORBKIT's QC class.
+	QCinfo instance representing the molecule.
 	  grid_par : int
 	Parameter controlling grid. If positive or zero, specifies number of points; else specifies the resolution in atomic units.
 	  over_s : int|float
@@ -29,6 +29,8 @@ def _init_ORB_grid(data, grid_par=-6, over_s=7):
 	  X, Y, Z
 	Meshgrid (as returned by numpy.mgrid) for locating the voxels.
 	"""
+
+	from orbkit import grid
 
 	## Spacing/Number of points
 	if grid_par > 0:
@@ -98,7 +100,7 @@ def MO(j_data, MO_list, grid_par=-6):
 
 
 
-def _density_MOs(transitions):
+def _density_difference_MOs(transitions):
 	## Get all MOs involved in transitions
 	MO_list = [STT[0] for T in transitions for ST in T for STT in ST[:2]]
 	MO_set = set(MO_list)
@@ -142,7 +144,7 @@ def TD(j_data, transitions, grid_par=-6):
 	## To save time, the calculation is done in two phases:
 
 	## 1. Get all MOs involved in transitions and calculate them once
-	MO_set, tab = _density_MOs(transitions)
+	MO_set, tab = _density_difference_MOs(transitions)
 
 	MOs, X, Y, Z = MO(j_data, [str(O + 1) for O in MO_set], grid_par=grid_par)
 
@@ -178,3 +180,39 @@ def TD(j_data, transitions, grid_par=-6):
 		out += [(vox_data, tozer, (D*pm_to_a0, Qctp, Mu, Pp, Pn))]
 
 	return out, X, Y, Z
+
+
+
+def Potential(j_data, grid_par=-6):
+	u"""Calculates the electric potential difference for the molecule.
+	"""
+
+	qc = read.convert_json(j_data)
+
+	X, Y, Z = _init_ORB_grid(qc, grid_par=grid_par)
+
+	dx, dy, dz = (X[10,0,0] - X[9,0,0]), (Y[0,10,0] - Y[0,9,0]), (Z[0,0,10] - Z[0,0,9])
+	d3r = dx*dy*dz
+
+	rho = core.rho_compute(qc, numproc=4)
+
+	## The potential can be separated into two terms
+	## V_n, the contribution from nuclear charges
+	V_n = np.ndarray(rho.shape)
+	for i in range(len(qc.geo_spec)):
+		## This currently works by:
+		## 1. reshaping the atom position triplet to the shape of the meshgrids
+		## 2. calculating the norm accross the three dimensions
+		## 3. propagating the meshgrid shape to the charge
+		V_n += float(qc.geo_info[i,-1])/np.linalg.norm(np.array([X, Y, Z]) - qc.geo_spec[i].reshape((3,1,1,1)), axis=0)
+
+	## V_r, the contribution from the electron density
+	V_r = np.ndarray(rho.shape)
+	X_, Y_, Z_ = X[:,0,0], Y[0,:,0], Z[0,0,:]
+	for i in xrange(rho.shape[0]):
+		for j in xrange(rho.shape[1]):
+			for k in xrange(rho.shape[2]):
+				V_r[i,j,k] = np.sum(rho/np.linalg.norm(np.array([X_[i], Y_[j], Z_[k]]).reshape((3,1,1,1)) - np.array([X, Y, Z]), axis=0))*d3r
+	#V_r = np.sum(rho)*d3r
+
+	return rho, V_n - V_r, X, Y, Z
