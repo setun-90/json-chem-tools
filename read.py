@@ -2218,16 +2218,16 @@ def convert_json(jData, all_mo=False, spin=None):
   import scipy.sparse
   sym = {}
   shape = (jData['results']['wavefunction']['MO_number_kept'], jData['comp_details']['general']['basis_set_size'])
-  print shape
+  pre_mocoeffs = jData['results']["wavefunction"]["MO_coefs"]
   if restricted:
     add = ['']
     orb_sym = [None]
-    mocoeffs = [numpy.asarray(scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in jData['results']["wavefunction"]["MO_coefs"][0]]), shape=shape).todense())]
+    mocoeffs = [numpy.asarray(scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in pre_mocoeffs[0]]), shape=shape).todense())]
   else:
     add = ['_a','_b']      
     orb_sym = ['alpha','beta']
-    mocoeffs = [numpy.asarray(scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in jData['results']["wavefunction"]["MO_coefs"][0]]), shape=shape).todense()),
-                numpy.asarray(scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in jData['results']["wavefunction"]["MO_coefs"][1]]), shape=shape).todense())]
+    mocoeffs = [numpy.asarray(scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in pre_mocoeffs[0]]), shape=shape).todense()),
+                numpy.asarray(scipy.sparse.csr_matrix(tuple([numpy.asarray(d) for d in pre_mocoeffs[1]]), shape=shape).todense())]
 
   nmo = jData['results']['wavefunction']['MO_number'] if "nmo" in jData['results']['wavefunction'] else len(mocoeffs[0])
   for ii in range(nmo):
