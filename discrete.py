@@ -14,6 +14,7 @@ import numpy as np
 
 ## Usage
 usage = ( "Usage: {0} $action MO[=$value]                  $npts ${{input}}.json                      ${{output}}\n"
+        + "     | {0} $action Potential                    $npts ${{input}}.json                      ${{output}}\n"
         + "     | {0} $action (TD|EDD|BARY|Tozer)[=$value] $npts ${{OPT-input}}.json ${{TD-input}}.json ${{output}}\n"
 	+ "     | {0} $action topo                         $npts ${{input}}.json                      ${{output}}\n").format(argv[0])
 
@@ -123,3 +124,8 @@ elif job in {"TD", "EDD", "BARY", "Tozer"}:
 
 	elif job == "Tozer":
 		print [e[1] for e in out]
+
+elif job == "Potential":
+	out_r, out_V, X, Y, Z = Potential(data, grid_par=par)
+
+	viz_Potential(out_V, X, Y, Z, data)
