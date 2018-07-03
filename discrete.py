@@ -7,18 +7,18 @@ from sys import argv
 from physics import A_to_a0
 from calc_orb import *
 from viz_orb_mayavi import *
-## Patched version of orbkit.read
 import numpy as np
 
 
 
 ## Usage
-usage = ( "Usage: {0} $action MO[=$value]                  $npts ${{input}}.json                      ${{output}}\n"
-        + "     | {0} $action Potential                    $npts ${{input}}.json                      ${{output}}\n"
-        + "     | {0} $action (TD|EDD|BARY|Tozer)[=$value] $npts ${{OPT-input}}.json ${{TD-input}}.json ${{output}}\n"
-	+ "     | {0} $action topo                         $npts ${{input}}.json                      ${{output}}\n").format(argv[0])
+usage = ( "Usage: {0} topo                         $npts ${{input}}.json                      ${{output}}\n"
+	+ "     | {0} MO[=$value]                  $npts ${{input}}.json                      ${{output}}\n"
+        + "     | {0} Potential                    $npts ${{input}}.json                      ${{output}}\n"
+        + "     | {0} (TD|EDD|BARY|Tozer)[=$value] $npts ${{OPT-input}}.json ${{TD-input}}.json ${{output}}\n"
+        + "     | {0} Fukui[=$value]               $npts ${{OPT-input}}.json ${{SP-input}}.json ${{output}}\n").format(argv[0])
 
-if len(argv) < 5:
+if len(argv) < 4:
 	from sys import stderr, exit
 	stderr.write(usage)
 	exit(0)
@@ -27,7 +27,7 @@ if len(argv) < 5:
 
 ## Input
 from json import load
-if ".json" not in argv[4]:
+if ".json" not in argv[3]:
 	from sys import stderr, exit
 	stderr.write(usage)
 	exit(1)
@@ -39,7 +39,7 @@ if ".json" not in argv[4]:
 	##cc_data.mocoeffs[0] = [[0.0 if np.log(np.abs(x)) < -9 else x for x in S] for S in cc_data.mocoeffs[0]]
 	#qc = read.convert_cclib(cc_data, all_mo=True)
 
-with open(argv[4], "r") as f:
+with open(argv[3], "r") as f:
 	data = load(f)
 
 
@@ -51,12 +51,12 @@ with open(argv[4], "r") as f:
 over_s = 7
 
 ## Spacing/Number of points
-par = int(argv[3])
+par = int(argv[2])
 
 
 
 ## Get job type and parameters
-val = argv[2].split("=")
+val = argv[1].split("=")
 job = val[0]
 
 
@@ -64,7 +64,7 @@ job = val[0]
 ## Calculate
 if job == "topo":
 	try:
-		file_name=argv[5]
+		file_name=argv[4]
 	except IndexError:
 		file_name=None
 
@@ -80,19 +80,19 @@ elif job == "MO":
 		print np.sum(np.square(series))*(X[1,0,0] - X[0,0,0])*(Y[0,1,0] - Y[0,0,0])*(Z[0,0,1] - Z[0,0,0])
 
 	try:
-		file_name=argv[5]
+		file_name=argv[4]
 	except IndexError:
 		file_name=None
 
 	viz_MO(out, X, Y, Z, data, file_name=file_name)
 
 elif job in {"TD", "EDD", "BARY", "Tozer"}:
-	if ".json" not in argv[5]:
+	if ".json" not in argv[4]:
 		from sys import stderr, exit
 		stderr.write(usage)
 		exit(1)
 
-	with open(argv[5], "r") as f:
+	with open(argv[4], "r") as f:
 		TD_data = load(f)
 
 	try:
@@ -103,7 +103,7 @@ elif job in {"TD", "EDD", "BARY", "Tozer"}:
 
 
 	try:
-		file_name=argv[6]
+		file_name=argv[5]
 	except IndexError:
 		file_name=None
 
@@ -126,6 +126,23 @@ elif job in {"TD", "EDD", "BARY", "Tozer"}:
 		print [e[1] for e in out]
 
 elif job == "Potential":
+	try:
+		file_name=argv[4]
+	except IndexError:
+		file_name=None
+
+	print file_name
+
 	out_r, out_V, X, Y, Z = Potential(data, grid_par=par)
 
-	viz_Potential(out_V, X, Y, Z, data)
+	P = np.array([X, Y, Z])
+
+	if file_name is not None:
+		np.save("./{}-P".format(file_name), P)
+		np.save("./{}-rho".format(file_name), out_r)
+		np.save("./{}-V".format(file_name), out_V)
+
+	viz_Potential(out_r, out_V, X, Y, Z, data, file_name=file_name)
+
+elif job == "Fukui":
+	pass
