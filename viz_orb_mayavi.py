@@ -27,7 +27,7 @@ with open("Atoms.csv", "r") as f:
 ## Elevation angle
 angle = 20
 
-def _scene_init(j_data):
+def _init_scene(j_data):
 	u"""Initializes the MayaVi scene.
 	** Parameters **
 	  j_data : dict
@@ -101,7 +101,7 @@ def _scene_init(j_data):
 
 ## Visualize
 def topo(j_data, file_name=None, size=(600,600)):
-	"""Creates the topological view of the molecule.
+	u"""Creates the topological view of the molecule.
 	** Parameters **
 	  j_data : dict
 	Data on the molecule, as deserialized from the scanlog format.
@@ -114,7 +114,7 @@ def topo(j_data, file_name=None, size=(600,600)):
 	The MayaVi scene containing the visualization.
 	"""
 
-	figure, normal = _scene_init(j_data)
+	figure, normal = _init_scene(j_data)
 	geom = np.array(j_data["results"]["geometry"]["elements_3D_coords_converged"]).reshape((-1,3))/A_to_a0
 
 	## Show labels and numbers ( = indices + 1 )
@@ -128,7 +128,7 @@ def topo(j_data, file_name=None, size=(600,600)):
 	return figure
 
 def viz_MO(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
-	"""Visualizes the molecular orbitals of the molecule.
+	u"""Visualizes the molecular orbitals of the molecule.
 	** Parameters **
 	  data : list(numpy.ndarray)
 	List of series of voxels containing the scalar values of the molecular orbitals to plot.
@@ -139,7 +139,7 @@ def viz_MO(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 	  file_name : str, optional
 	Base name of the files in which to save the images.
 	  labels : list(str), optional
-	Labels to append to `file_name`. If None, the index of the series is appended.
+	Labels to append to `file_name` for each series in `data`. If None, the position of the series is appended.
 	  size : tuple(int, int), optional
 	The size of the image to save.
 	** Returns **
@@ -147,7 +147,7 @@ def viz_MO(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 	The MayaVi scene containing the visualization.
 	"""
 
-	figure = _scene_init(j_data)[0]
+	figure = _init_scene(j_data)[0]
 	for i, series in enumerate(data):
 
 		MO_data = mlab.pipeline.scalar_field(X, Y, Z, series, figure=figure)
@@ -164,7 +164,7 @@ def viz_MO(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 	return figure
 
 def viz_EDD(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
-	"""Visualizes the electron density differences for the transitions of the molecule.
+	u"""Visualizes the electron density differences for the transitions of the molecule.
 	** Parameters **
 	  data : list(numpy.ndarray)
 	Voxels containing the scalar values of the electron density differences to plot.
@@ -175,7 +175,7 @@ def viz_EDD(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 	  file_name : str, optional
 	Base name of the files in which to save the images.
 	  labels : list(str), optional
-	Labels to append to `file_name`. If None, the index of the series is appended.
+	Labels to append to `file_name` for each series in `data`. If None, the position of the series is appended.
 	  size : tuple(int, int), optional
 	The size of the image to save.
 	** Returns **
@@ -183,7 +183,7 @@ def viz_EDD(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 	The MayaVi scene containing the visualization.
 	"""
 
-	figure = _scene_init(j_data)[0]
+	figure = _init_scene(j_data)[0]
 	for i, series in enumerate(data):
 		D_data = mlab.pipeline.scalar_field(X, Y, Z, series, figure=figure)
 
@@ -201,7 +201,7 @@ def viz_EDD(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 	return figure
 
 def viz_BARY(data, j_data, file_name=None, labels=None, size=(600,600)):
-	"""Visualizes the barycenters of the electron density difference (for visualizing dipole moments).
+	u"""Visualizes the barycenters of the electron density difference (for visualizing dipole moments).
 	** Parameters **
 	  data : tuple(numpy.ndarray((3,N)), numpy.ndarray((3,N)))
 	Pair of column-major matrices containing the coordinates of the positive and negative barycenters, in that order.
@@ -210,7 +210,7 @@ def viz_BARY(data, j_data, file_name=None, labels=None, size=(600,600)):
 	  file_name : str, optional
 	Base name of the files in which to save the images.
 	  labels : list(str), optional
-	Labels to append to `file_name`. If None, the index of the series is appended.
+	Labels to append to `file_name` for each datum in `data`. If None, the position of the datum is appended.
 	  size : tuple(int, int), optional
 	The size of the image to save.
 	** Returns **
@@ -218,7 +218,7 @@ def viz_BARY(data, j_data, file_name=None, labels=None, size=(600,600)):
 	The MayaVi scene containing the visualization.
 	"""
 
-	figure = _scene_init(j_data)[0]
+	figure = _init_scene(j_data)[0]
 
 	for i, D in enumerate(data):
 		#Pp = mlab.points3d(D[0][0], D[0][1], D[0][2], figure=figure, mode='axes', scale_factor=0.3, color=(0.0, 0.5, 0.5))
@@ -237,11 +237,11 @@ def viz_BARY(data, j_data, file_name=None, labels=None, size=(600,600)):
 
 	return figure
 
-def viz_Potential(data, X, Y, Z, j_data, file_name=None, size=(600,600)):
+def viz_Potential(r_data, V_data, X, Y, Z, j_data, file_name=None, size=(600,600)):
 	u"""Visualizes the electrostatic potential difference of the molecule.
 	** Parameters **
-	  data : numpy.ndarray
-	Numpy.ndarray containing the voxels of the potential difference of the molecule.
+	  r_data, V_data : numpy.ndarray
+	Voxels of the electron density and the potential difference of the molecule, respectively.
 	  X, Y, Z : numpy.ndarray
 	Meshgrids as generated by numpy.mgrid, for positioning the voxels.
 	  j_data : dict
@@ -255,14 +255,28 @@ def viz_Potential(data, X, Y, Z, j_data, file_name=None, size=(600,600)):
 	The MayaVi scene containing the visualization.
 	"""
 
-	figure = _scene_init(j_data)[0]
+	figure = _init_scene(j_data)[0]
 
-	data[np.isinf(data)] = np.nan
+	#r_data[np.isinf(r_data)] = np.nan
+	V_data[np.isinf(V_data)] = np.nan
 
-	src = mlab.pipeline.scalar_field(X, Y, Z, data, figure=figure)
-	mlab.pipeline.iso_surface(src, figure=figure, contours=[ 3 ], color=(0.0, 0.5, 0.5))
-	mlab.pipeline.iso_surface(src, figure=figure, contours=[-3 ], color=(0.95, 0.95, 0.95))
+	src = mlab.pipeline.scalar_field(X, Y, Z, V_data, figure=figure)
+	#src = mlab.pipeline.scalar_field(X, Y, Z, r_data, figure=figure)
+	#src.image_data.point_data.add_array(V_data)
+	#src.image_data.point_data.get_array(1).name = "DV"
+
+	#srcp = mlab.pipeline.set_active_attribute
+	srcp = mlab.pipeline.iso_surface(src, figure=figure, contours=[ 0.001], color=(0.0, 0.5, 0.5))
+	srcn = mlab.pipeline.iso_surface(src, figure=figure, contours=[-0.001], color=(0.95, 0.95, 0.95))
+
+	mlab.show()
+
+	if file_name is not None:
+		mlab.savefig("./{}-Potential.png".format(file_name), figure=figure, size=size)
 
 	mlab.show()
 
 	return figure
+
+def viz_Fukui(data, X, Y, Z, j_data, file_name=None, size=(600,600)):
+	pass
