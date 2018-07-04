@@ -257,15 +257,35 @@ def viz_Potential(r_data, V_data, X, Y, Z, j_data, file_name=None, size=(600,600
 
 	figure = _init_scene(j_data)[0]
 
+	## Clear out infinities
 	#r_data[np.isinf(r_data)] = np.nan
+	#src = mlab.pipeline.scalar_field(X, Y, Z, r_data, figure=figure)
+
+	## Add potential as additional array
+	#src.image_data.point_data.add_array(V_data)
+
+	## Name it
+	#src.image_data.point_data.get_array(1).name = "DV"
+
+	## Update object
+	#src.update()
+
+	## Select scalar attribute
+	#srcp = mlab.pipeline.set_active_attribute(src, point_scalars="scalar")
+
+	## Plot it
+	#cont = mlab.pipeline.contour(srcp, figure=figure)
+
+	## Select potential
+	#contp = mlab.pipeline.set_active_attribute(cont, point_scalars="DV")
+
+	## And finally plot that
+	## Colormap to be determined
+	#mlab.pipeline.surface(surfp, figure=figure, colormap=foo)
+
 	V_data[np.isinf(V_data)] = np.nan
 
 	src = mlab.pipeline.scalar_field(X, Y, Z, V_data, figure=figure)
-	#src = mlab.pipeline.scalar_field(X, Y, Z, r_data, figure=figure)
-	#src.image_data.point_data.add_array(V_data)
-	#src.image_data.point_data.get_array(1).name = "DV"
-
-	#srcp = mlab.pipeline.set_active_attribute
 	srcp = mlab.pipeline.iso_surface(src, figure=figure, contours=[ 0.4], color=(0.0, 0.5, 0.5))
 	srcn = mlab.pipeline.iso_surface(src, figure=figure, contours=[-0.05], color=(0.95, 0.95, 0.95))
 
