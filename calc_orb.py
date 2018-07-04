@@ -226,47 +226,51 @@ def Potential(j_data, grid_par=-6):
 	d3r = dx*dy*dz
 
 	rho = core.rho_compute(qc, numproc=4)
-
-	rho_T = np.sum(rho)*d3r
+	print "Rho : ", np.sum(rho)*d3r, "(", np.min(rho)," ... ", np.max(rho),")"
+	print "P0 : ", X[0,0,0], Y[0,0,0], Z[0,0,0]
+	print "P1 : ", X[-1,0,0], Y[0,-1,0], Z[0,0,-1]
 	P = np.array([X, Y, Z])
 
 	## The potential can be separated into two terms
-	## V_n, the contribution from nuclear charges
+	## V_n, the contribution from nuclear charges (positive)
 	V_n = np.ndarray(rho.shape)
 	for i in range(len(qc.geo_spec)):
 		## This currently works by:
 		## 1. reshaping the atom position triplet to the shape of the meshgrids
 		## 2. calculating the norm accross the three dimensions
 		## 3. propagating the meshgrid shape to the charge
-		V_n += float(qc.geo_info[i,-1])/np.linalg.norm(P - qc.geo_spec[i].reshape((3,1,1,1)), axis=0)
+		R = np.linalg.norm(P - qc.geo_spec[i].reshape((3,1,1,1)), axis=0)
+		R[R < 0.005] = np.inf
+		N_i = float(qc.geo_info[i,-1])/R
+		V_n += N_i
+		print "V_n (", qc.geo_info[i,0], qc.geo_info[i,-1], ") : (", np.min(N_i), ", ", np.max(N_i), ") (", np.argwhere(N_i > 250).size, ")"
 
-	print "Rho : ", rho_T, "(", np.min(rho)," ... ", np.max(rho),")"
-	print X[0,0,0], Y[0,0,0], Z[0,0,0]
+
 	TIx, TIy, TIz = rho.shape
 	Tx, Ty, Tz = X[-1,0,0] - X[0,0,0], Y[0,-1,0] - Y[0,0,0], Z[0,0,-1] - Z[0,0,0]
 
 
-	## V_r, the contribution from the electron density
+	## V_r, the contribution from the electron density (negative)
 	## To avoid calculating the full volume integral,
 	## we consider rho as a kernel and apply it to
 	## the grid of inverse distances as though it
 	## were an image
 
 	## 1. Accumulate local potential
-	V_r = np.ones(rho.shape)*rho
+	V_e = np.ones(rho.shape)*rho
 
 	## Reverse rho, so that it is traversed in the
 	## same direction as the image matrix
 	rho_r = rho[::-1,::-1,::-1].copy()
 
 	## 2. Extend grid
-	P_ = np.array(np.mgrid[ X[0,0,0] - Tx : X[-1,0,0] + dx : dx,
-	                        Y[0,0,0] - Ty : Y[0,-1,0] + dy : dy,
-	                        Z[0,0,0] - Tz : Z[0,0,-1] + dz : dz ])
-	print P.shape, P_.shape
+	X_, Y_, Z_ = np.mgrid[ dx*(1 - TIx) : dx*TIx : dx,
+	                       dy*(1 - TIy) : dy*TIy : dy,
+	                       dz*(1 - TIz) : dz*TIz : dz ]
+	print P.shape
 
 	## 3. Calculate distance grid
-	D = np.linalg.norm(np.array([0,0,0]).reshape((3,1,1,1)) - P_, axis=0)
+	D = np.linalg.norm(np.array([0,0,0]).reshape((3,1,1,1)) - np.array([X_,Y_,Z_]), axis=0)
 	D[TIx - 1, TIy - 1, TIz - 1] = np.inf
 	R = 1/D
 
@@ -276,20 +280,14 @@ def Potential(j_data, grid_par=-6):
 		for j in xrange(TIy):
 			je = j + TIy
 			for k in xrange(TIz):
-				V_r[i,j,k] += (rho_r * R[i:ie, j:je, k:k + TIz]).sum()
+				V_e[i,j,k] += (rho_r * R[i:ie, j:je, k:k + TIz]).sum()
 
-	#V_r = np.zeros(rho.shape)
+	#from scipy import signal as sg
+	#V_e += sg.fftconvolve(R, rho_r, "valid")
 
-	#for i in xrange(TIx):
-	#	for j in xrange(TIy):
-	#		for k in xrange(TIz):
-	#			D = 1/np.linalg.norm(P[:,i,j,k].reshape((3,1,1,1)) - P, axis=0)
-	#			D[np.isinf(D)] = 0
-	#			V_r[i,j,k] += np.sum(rho*D)
+	V_e *= d3r
 
-	V_r *= d3r
-
-	return rho, V_n - V_r, X, Y, Z
+	return rho, V_n - V_e, X, Y, Z
 
 def Fukui(j_data, grid_par=-6):
 	u"""Calculates the density differences/Fukui functions of the molecule.
