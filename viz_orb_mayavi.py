@@ -266,8 +266,8 @@ def viz_Potential(r_data, V_data, X, Y, Z, j_data, file_name=None, size=(600,600
 	#src.image_data.point_data.get_array(1).name = "DV"
 
 	#srcp = mlab.pipeline.set_active_attribute
-	srcp = mlab.pipeline.iso_surface(src, figure=figure, contours=[ 0.001], color=(0.0, 0.5, 0.5))
-	srcn = mlab.pipeline.iso_surface(src, figure=figure, contours=[-0.001], color=(0.95, 0.95, 0.95))
+	srcp = mlab.pipeline.iso_surface(src, figure=figure, contours=[ 0.4], color=(0.0, 0.5, 0.5))
+	srcn = mlab.pipeline.iso_surface(src, figure=figure, contours=[-0.05], color=(0.95, 0.95, 0.95))
 
 	mlab.show()
 
