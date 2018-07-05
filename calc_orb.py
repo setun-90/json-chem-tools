@@ -249,7 +249,7 @@ def Potential(j_data, grid_par=-6):
 
 	qc = read.convert_json(j_data)
 
-	X, Y, Z = _alt_init_ORB_grid(qc, [30]*3, [1.0/3.0]*3)
+	X, Y, Z = _alt_init_ORB_grid(qc, [60]*3, [1.0/6.0]*3)
 
 	dx, dy, dz = (X[10,0,0] - X[9,0,0]), (Y[0,10,0] - Y[0,9,0]), (Z[0,0,10] - Z[0,0,9])
 	d3r = dx*dy*dz
