@@ -16,3 +16,6 @@ pm_to_a0 = A_to_a0*100
 
 ## A.U. to Debye conversion factor
 ea0_to_D = 0.393430307
+
+## V to Kcal.mol^-1 conversion factor
+V_to_Kcal_mol = 1/627.51
