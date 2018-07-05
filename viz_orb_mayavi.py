@@ -3,7 +3,7 @@
 
 
 
-from physics import A_to_a0
+from physics import A_to_a0, V_to_Kcal_mol
 import numpy as np
 
 try:
@@ -29,16 +29,19 @@ angle = 20
 
 def _init_scene(j_data):
 	u"""Initializes the MayaVi scene.
+
 	** Parameters **
 	  j_data : dict
 	Data on the molecule, as deserialized from the scanlog format.
+
 	** Returns **
 	  figure : mayavi.core.scene.Scene
 	The MayaVi scene with the atoms plotted.
 	  normal : numpy.ndarray
 	The normal vector of the viewing plane (used mostly for the topological view).
 	"""
-	figure = mlab.figure(bgcolor=(1,1,1))
+
+	figure = mlab.figure(bgcolor=(1,1,1), fgcolor=(0,0,0))
 	figure.scene.disable_render= True
 	geom = np.array(j_data["results"]["geometry"]["elements_3D_coords_converged"]).reshape((-1,3))/A_to_a0
 
@@ -102,6 +105,7 @@ def _init_scene(j_data):
 ## Visualize
 def topo(j_data, file_name=None, size=(600,600)):
 	u"""Creates the topological view of the molecule.
+
 	** Parameters **
 	  j_data : dict
 	Data on the molecule, as deserialized from the scanlog format.
@@ -109,6 +113,7 @@ def topo(j_data, file_name=None, size=(600,600)):
 	Base name of the file in which to save the image.
 	  size : tuple(int, int), optional
 	The size of the image to save.
+
 	** Returns **
 	  figure : mayavi.core.scene.Scene
 	The MayaVi scene containing the visualization.
@@ -129,6 +134,7 @@ def topo(j_data, file_name=None, size=(600,600)):
 
 def viz_MO(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 	u"""Visualizes the molecular orbitals of the molecule.
+
 	** Parameters **
 	  data : list(numpy.ndarray)
 	List of series of voxels containing the scalar values of the molecular orbitals to plot.
@@ -142,6 +148,7 @@ def viz_MO(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 	Labels to append to `file_name` for each series in `data`. If None, the position of the series is appended.
 	  size : tuple(int, int), optional
 	The size of the image to save.
+
 	** Returns **
 	  figure : mayavi.core.scene.Scene
 	The MayaVi scene containing the visualization.
@@ -165,6 +172,7 @@ def viz_MO(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 
 def viz_EDD(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 	u"""Visualizes the electron density differences for the transitions of the molecule.
+
 	** Parameters **
 	  data : list(numpy.ndarray)
 	Voxels containing the scalar values of the electron density differences to plot.
@@ -178,6 +186,7 @@ def viz_EDD(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 	Labels to append to `file_name` for each series in `data`. If None, the position of the series is appended.
 	  size : tuple(int, int), optional
 	The size of the image to save.
+
 	** Returns **
 	  figure : mayavi.core.scene.Scene
 	The MayaVi scene containing the visualization.
@@ -202,6 +211,7 @@ def viz_EDD(data, X, Y, Z, j_data, file_name=None, labels=None, size=(600,600)):
 
 def viz_BARY(data, j_data, file_name=None, labels=None, size=(600,600)):
 	u"""Visualizes the barycenters of the electron density difference (for visualizing dipole moments).
+
 	** Parameters **
 	  data : tuple(numpy.ndarray((3,N)), numpy.ndarray((3,N)))
 	Pair of column-major matrices containing the coordinates of the positive and negative barycenters, in that order.
@@ -213,6 +223,7 @@ def viz_BARY(data, j_data, file_name=None, labels=None, size=(600,600)):
 	Labels to append to `file_name` for each datum in `data`. If None, the position of the datum is appended.
 	  size : tuple(int, int), optional
 	The size of the image to save.
+
 	** Returns **
 	  figure : mayavi.core.scene.Scene
 	The MayaVi scene containing the visualization.
@@ -239,6 +250,7 @@ def viz_BARY(data, j_data, file_name=None, labels=None, size=(600,600)):
 
 def viz_Potential(r_data, V_data, X, Y, Z, j_data, file_name=None, size=(600,600)):
 	u"""Visualizes the electrostatic potential difference of the molecule.
+
 	** Parameters **
 	  r_data, V_data : numpy.ndarray
 	Voxels of the electron density and the potential difference of the molecule, respectively.
@@ -250,6 +262,7 @@ def viz_Potential(r_data, V_data, X, Y, Z, j_data, file_name=None, size=(600,600
 	Base name of the file in which to save the image.
 	  size : tuple(int, int), optional
 	The size of the image to save.
+
 	** Returns **
 	  figure : mayavi.core.scene.Scene
 	The MayaVi scene containing the visualization.
@@ -257,45 +270,45 @@ def viz_Potential(r_data, V_data, X, Y, Z, j_data, file_name=None, size=(600,600
 
 	figure = _init_scene(j_data)[0]
 
-	## Clear out infinities
-	#r_data[np.isinf(r_data)] = np.nan
-	#src = mlab.pipeline.scalar_field(X, Y, Z, r_data, figure=figure)
+	src = mlab.pipeline.scalar_field(X, Y, Z, r_data, figure=figure)
 
 	## Add potential as additional array
-	#src.image_data.point_data.add_array(V_data.T.ravel())
+	src.image_data.point_data.add_array(V_data.T.ravel()/V_to_Kcal_mol)
 
 	## Name it
-	#src.image_data.point_data.get_array(1).name = "DV"
+	src.image_data.point_data.get_array(1).name = "potential"
 
 	## Update object
-	#src.update()
+	src.update()
 
 	## Select scalar attribute
-	#srcp = mlab.pipeline.set_active_attribute(src, figure=figure, point_scalars="scalar")
+	srcp = mlab.pipeline.set_active_attribute(src, figure=figure, point_scalars="scalar")
 
 	## Plot it
-	#cont = mlab.pipeline.contour(srcp, figure=figure)
+	cont = mlab.pipeline.contour(srcp, figure=figure)
+	cont.filter.contours=[0.001]
 
 	## Select potential
-	#contp = mlab.pipeline.set_active_attribute(cont, figure=figure, point_scalars="DV")
+	cont_V = mlab.pipeline.set_active_attribute(cont, figure=figure, point_scalars="potential")
+	#contp = mlab.pipeline.threshold(cont_V, figure=figure, up=)
+	#contn = mlab.pipeline.threshold(cont_V, figure=figure, low=V_data.min()*0.95)
 
 	## And finally plot that
-	## Colormap to be determined
-	#mlab.pipeline.surface(contp, figure=figure)
+	mlab.pipeline.surface(cont_V, figure=figure, opacity=0.7)
 
 	## Continue with this until problems with potential calculation are fixed
-	V_data[np.isinf(V_data)] = np.nan
+	#V_data[np.isinf(V_data)] = np.nan
 
-	src = mlab.pipeline.scalar_field(X, Y, Z, V_data, figure=figure)
-	srcp = mlab.pipeline.iso_surface(src, figure=figure, contours=[ 0.4], color=(0.0, 0.5, 0.5))
-	srcn = mlab.pipeline.iso_surface(src, figure=figure, contours=[-0.05], color=(0.95, 0.95, 0.95))
+	#src = mlab.pipeline.scalar_field(X, Y, Z, V_data, figure=figure)
+	#srcp = mlab.pipeline.iso_surface(src, figure=figure, contours=[ 0.4], color=(0.0, 0.5, 0.5))
+	#srcn = mlab.pipeline.iso_surface(src, figure=figure, contours=[-0.05], color=(0.95, 0.95, 0.95))
+
+	mlab.colorbar(title='Kcal/mol', orientation='vertical', nb_labels=3)
 
 	mlab.show()
 
 	if file_name is not None:
 		mlab.savefig("./{}-Potential.png".format(file_name), figure=figure, size=size)
-
-	mlab.show()
 
 	return figure
 
