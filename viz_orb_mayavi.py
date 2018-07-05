@@ -262,7 +262,7 @@ def viz_Potential(r_data, V_data, X, Y, Z, j_data, file_name=None, size=(600,600
 	#src = mlab.pipeline.scalar_field(X, Y, Z, r_data, figure=figure)
 
 	## Add potential as additional array
-	#src.image_data.point_data.add_array(V_data)
+	#src.image_data.point_data.add_array(V_data.T.ravel())
 
 	## Name it
 	#src.image_data.point_data.get_array(1).name = "DV"
@@ -271,18 +271,19 @@ def viz_Potential(r_data, V_data, X, Y, Z, j_data, file_name=None, size=(600,600
 	#src.update()
 
 	## Select scalar attribute
-	#srcp = mlab.pipeline.set_active_attribute(src, point_scalars="scalar")
+	#srcp = mlab.pipeline.set_active_attribute(src, figure=figure, point_scalars="scalar")
 
 	## Plot it
 	#cont = mlab.pipeline.contour(srcp, figure=figure)
 
 	## Select potential
-	#contp = mlab.pipeline.set_active_attribute(cont, point_scalars="DV")
+	#contp = mlab.pipeline.set_active_attribute(cont, figure=figure, point_scalars="DV")
 
 	## And finally plot that
 	## Colormap to be determined
-	#mlab.pipeline.surface(surfp, figure=figure, colormap=foo)
+	#mlab.pipeline.surface(contp, figure=figure)
 
+	## Continue with this until problems with potential calculation are fixed
 	V_data[np.isinf(V_data)] = np.nan
 
 	src = mlab.pipeline.scalar_field(X, Y, Z, V_data, figure=figure)
